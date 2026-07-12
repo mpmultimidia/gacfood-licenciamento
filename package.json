@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch serve.ts",
-    "build": "cd frontend && npm install && npm run build && cd .. && tsc",
+    "build": "cd frontend && npm install && npm run build",
     "start": "node dist/serve.js",
     "vercel-build": "cd frontend && npm install && npm run build"
   },
