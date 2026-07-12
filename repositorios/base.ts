@@ -8,4 +8,4 @@ export abstract class RepositorioBase {
   public tabela(): string {
     return this.nomeTabela;
   }
-}-
+}
