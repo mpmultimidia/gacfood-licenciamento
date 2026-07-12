@@ -35,7 +35,7 @@ export default function Empresas() {
             const resposta = await api.listarEmpresas();
 
             setEmpresas(
-                resposta.data ?? []
+                resposta.data.empresas ?? []
             );
 
         }catch(erro){
