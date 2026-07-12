@@ -1,12 +1,12 @@
 {
-  "name": "gacfood-licenciamento-api",
+  "name": "gacfood-licenciamento",
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "tsx watch serve.ts",
+    "build": "cd frontend && npm install && npm run build && cd .. && tsc",
     "start": "node dist/serve.js",
-    "build": "tsc",
     "vercel-build": "npm run build"
   },
   "dependencies": {
