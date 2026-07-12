@@ -7,7 +7,7 @@
     "dev": "tsx watch serve.ts",
     "build": "cd frontend && npm install && npm run build && cd .. && tsc",
     "start": "node dist/serve.js",
-    "vercel-build": "npm run build"
+    "vercel-build": "cd frontend && npm install && npm run build",
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",
