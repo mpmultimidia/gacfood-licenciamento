@@ -3,7 +3,7 @@ import {
   listarPlanosModulos,
   buscarPlanoModulo,
   criarPlanoModulo
-} from "../../servicos/planoModulo.ts";
+} from "../../servicos/planoModulo.js";
 
 const router = Router();
 

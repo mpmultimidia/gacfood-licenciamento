@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { ErroValidacao } from "../../licenciamento/validacao.ts";
+import { ErroValidacao } from "../../licenciamento/validacao.js";
 
 export function tratarErros(
   erro: unknown,

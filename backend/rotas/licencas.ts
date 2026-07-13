@@ -1,12 +1,12 @@
 // api/rotas/licencas.ts
 
 import { Router } from "express";
-import { envolverAsync } from "../middleware/tratarErros.ts";
+import { envolverAsync } from "../middleware/tratarErros.js";
 
 import {
   autenticarCliente,
   autenticarAdmin
-} from "../middleware/autenticar.ts";
+} from "../middleware/autenticar.js";
 
 import {
   solicitarCodigo,
@@ -14,7 +14,7 @@ import {
   statusLicenca,
   listarVencendo,
   listarHistorico,
-} from "../controles/licencasControle.ts";
+} from "../controles/licencasControle.js";
 
 
 export const licencasRotas = Router();

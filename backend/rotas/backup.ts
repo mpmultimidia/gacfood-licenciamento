@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { registrarBackup } from "../../servicos/backup.ts";
+import { registrarBackup } from "../../servicos/backup.js";
 
 const router = Router();
 

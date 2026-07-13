@@ -3,7 +3,7 @@ import {
   listarEmpresas,
   buscarEmpresa,
   criarEmpresa
-} from "../../servicos/empresa.ts";
+} from "../../servicos/empresa.js";
 
 const router = Router();
 

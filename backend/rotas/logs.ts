@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   registrarEventoSistema,
   listarLogsSistema
-} from "../../servicos/logsSistema.ts";
+} from "../../servicos/logsSistema.js";
 
 const router = Router();
 

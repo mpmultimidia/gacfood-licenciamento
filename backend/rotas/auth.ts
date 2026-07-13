@@ -1,8 +1,8 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
-import { envolverAsync } from "../middleware/tratarErros.ts";
-import { autenticarUsuario } from "../../servicos/usuario.ts";
-import { ambiente } from "../../config/ambiente.ts";
+import { envolverAsync } from "../middleware/tratarErros.js";
+import { autenticarUsuario } from "../../servicos/usuario.js";
+import { ambiente } from "../../config/ambiente.js";
 
 const router = Router();
 

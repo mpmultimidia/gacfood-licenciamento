@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { renovarLicenca } from "../../servicos/renovacaoLicenca.ts";
+import { renovarLicenca } from "../../servicos/renovacaoLicenca.js";
 
 const router = Router();
 

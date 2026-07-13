@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { enviarNotificacao } from "../../servicos/notificacao.ts";
+import { enviarNotificacao } from "../../servicos/notificacao.js";
 
 const router = Router();
 

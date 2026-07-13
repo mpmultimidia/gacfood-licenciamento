@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { resumoSistema } from "../../servicos/dashboard.ts";
+import { resumoSistema } from "../../servicos/dashboard.js";
 
 const router = Router();
 

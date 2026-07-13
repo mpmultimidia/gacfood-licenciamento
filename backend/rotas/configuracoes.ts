@@ -3,7 +3,7 @@ import {
   salvarConfiguracao,
   buscarConfiguracao,
   listarConfiguracoes
-} from "../../servicos/configuracao.ts";
+} from "../../servicos/configuracao.js";
 
 const router = Router();
 

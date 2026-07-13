@@ -1,26 +1,26 @@
 import { Router } from "express";
-import { autenticarAdmin, autenticarCliente } from "../middleware/autenticar.ts";
+import { autenticarAdmin, autenticarCliente } from "../middleware/autenticar.js";
 
-import authRota from "./auth.ts";
-import sistemaRota from "./sistema.ts";
-import empresasRota from "./empresas.ts";
-import planosRota from "./planos.ts";
-import assinaturasRota from "./assinaturas.ts";
-import usuariosRota from "./usuarios.ts";
-import permissoesRota from "./permissoes.ts";
-import licencasRota from "./licencas.ts";
-import modulosRota from "./modulos.ts";
-import planosModulosRota from "./planosModulos.ts";
-import empresasUsuariosRota from "./empresasUsuarios.ts";
-import usuariosPermissoesRota from "./usuariosPermissoes.ts";
-import validacaoRota from "./validacao.ts";
-import renovacaoRota from "./renovacao.ts";
-import dashboardRota from "./dashboard.ts";
-import saudeRota from "./saude.ts";
-import notificacaoRota from "./notificacao.ts";
-import backupRota from "./backup.ts";
-import configuracoesRota from "./configuracoes.ts";
-import logsRota from "./logs.ts";
+import authRota from "./auth.js";
+import sistemaRota from "./sistema.js";
+import empresasRota from "./empresas.js";
+import planosRota from "./planos.js";
+import assinaturasRota from "./assinaturas.js";
+import usuariosRota from "./usuarios.js";
+import permissoesRota from "./permissoes.js";
+import licencasRota from "./licencas.js";
+import modulosRota from "./modulos.js";
+import planosModulosRota from "./planosModulos.js";
+import empresasUsuariosRota from "./empresasUsuarios.js";
+import usuariosPermissoesRota from "./usuariosPermissoes.js";
+import validacaoRota from "./validacao.js";
+import renovacaoRota from "./renovacao.js";
+import dashboardRota from "./dashboard.js";
+import saudeRota from "./saude.js";
+import notificacaoRota from "./notificacao.js";
+import backupRota from "./backup.js";
+import configuracoesRota from "./configuracoes.js";
+import logsRota from "./logs.js";
 
 export const rotas = Router();
 

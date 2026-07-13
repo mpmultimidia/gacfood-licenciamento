@@ -3,7 +3,7 @@ import {
   listarModulos,
   buscarModulo,
   criarModulo
-} from "../../servicos/modulo.ts";
+} from "../../servicos/modulo.js";
 
 const router = Router();
 

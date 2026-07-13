@@ -3,7 +3,7 @@ import {
   listarUsuariosPermissoes,
   buscarUsuarioPermissao,
   criarUsuarioPermissao
-} from "../../servicos/usuarioPermissao.ts";
+} from "../../servicos/usuarioPermissao.js";
 
 const router = Router();
 

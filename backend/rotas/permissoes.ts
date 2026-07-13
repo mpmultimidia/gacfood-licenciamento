@@ -1,13 +1,13 @@
 // api/rotas/permissoes.ts
 
 import { Router } from "express";
-import { envolverAsync } from "../middleware/tratarErros.ts";
-import { autenticarAdmin } from "../middleware/autenticar.ts";
+import { envolverAsync } from "../middleware/tratarErros.js";
+import { autenticarAdmin } from "../middleware/autenticar.js";
 
 import {
   listarFuncionalidadesDaEmpresa,
   empresaTemFuncionalidade
-} from "../../licenciamento/permissoes.ts";
+} from "../../licenciamento/permissoes.js";
 
 
 const permissoesRotas = Router();

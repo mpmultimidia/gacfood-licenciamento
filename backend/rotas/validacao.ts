@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { validarLicencaEmpresa } from "../../servicos/validacaoLicenca.ts";
+import { validarLicencaEmpresa } from "../../servicos/validacaoLicenca.js";
 
 
 const router = Router();

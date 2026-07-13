@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { ErroValidacao } from "../../licenciamento/validacao.ts";
+import { ErroValidacao } from "../../licenciamento/validacao.js";
 
 export function middlewareErro(
   erro: unknown,

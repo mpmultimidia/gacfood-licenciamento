@@ -3,7 +3,7 @@ import {
   listarAssinaturas,
   buscarAssinatura,
   criarAssinatura
-} from "../../servicos/assinatura.ts";
+} from "../../servicos/assinatura.js";
 
 const router = Router();
 

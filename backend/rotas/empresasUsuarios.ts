@@ -3,7 +3,7 @@ import {
   listarEmpresasUsuarios,
   buscarEmpresaUsuario,
   criarEmpresaUsuario
-} from "../../servicos/empresaUsuario.ts";
+} from "../../servicos/empresaUsuario.js";
 
 const router = Router();
 

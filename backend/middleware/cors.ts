@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { ambiente } from "../../config/ambiente.ts";
+import { ambiente } from "../../config/ambiente.js";
 
 export function corsMiddleware(
   _req: Request,

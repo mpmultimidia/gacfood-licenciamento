@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { envolverAsync } from "../middleware/tratarErros.ts";
-import { autenticarAdmin } from "../middleware/autenticar.ts";
+import { envolverAsync } from "../middleware/tratarErros.js";
+import { autenticarAdmin } from "../middleware/autenticar.js";
 import {
   listarUsuarios,
   buscarUsuario,
   criarUsuario,
-} from "../../servicos/usuario.ts";
+} from "../../servicos/usuario.js";
 
 const router = Router();
 

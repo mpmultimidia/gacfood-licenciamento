@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { verificarSaudeBanco } from "../../servicos/saudeSistema.ts";
+import { verificarSaudeBanco } from "../../servicos/saudeSistema.js";
 
 const router = Router();
 
