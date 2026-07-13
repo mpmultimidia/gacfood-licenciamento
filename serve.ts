@@ -1,8 +1,8 @@
 import express from "express";
 import cors from "cors";
-import { ambiente } from "./config/ambiente.ts";
-import { rotas } from "./backend/rotas/index.ts";
-import { tratarErros } from "./backend/middleware/tratarErros.ts";
+import { ambiente } from "./config/ambiente.js";
+import { rotas } from "./backend/rotas/index.js";
+import { tratarErros } from "./backend/middleware/tratarErros.js";
 
 const app = express();
 
