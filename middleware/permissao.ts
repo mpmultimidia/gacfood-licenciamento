@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { verificarPermissao } from "../../servicos/permissaoAcesso.ts";
+import { verificarPermissao } from "../../servicos/permissaoAcesso.js";
 
 export function exigirPermissao(
   modulo: string

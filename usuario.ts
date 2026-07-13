@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { supabase } from "../supabase/conexao.ts";
+import { supabase } from "../supabase/conexao.js";
 
 export async function listarUsuarios() {
   const { data, error } = await supabase

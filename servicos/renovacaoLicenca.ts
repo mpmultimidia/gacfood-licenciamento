@@ -1,4 +1,4 @@
-import { supabase } from "../supabase/conexao.ts";
+import { supabase } from "../supabase/conexao.js";
 
 export async function renovarLicenca(
   id: string,

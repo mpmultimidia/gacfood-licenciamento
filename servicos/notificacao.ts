@@ -1,4 +1,4 @@
-import { registrarLog } from "./log.ts";
+import { registrarLog } from "./log.js";
 
 export function enviarNotificacao(
   destino: string,

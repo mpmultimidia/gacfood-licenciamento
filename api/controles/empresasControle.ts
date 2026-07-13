@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { supabase } from "../../supabase/conexao.ts";
-import { buscarEmpresaPorCodigo } from "../../licenciamento/validacao.ts";
+import { supabase } from "../../supabase/conexao.js";
+import { buscarEmpresaPorCodigo } from "../../licenciamento/validacao.js";
 
 export async function consultarEmpresa(
   req: Request,

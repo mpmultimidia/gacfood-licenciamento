@@ -1,4 +1,4 @@
-import { EmpresaRepositorio } from "../repositorios/empresa.ts";
+import { EmpresaRepositorio } from "../repositorios/empresa.js";
 
 const repositorio = new EmpresaRepositorio();
 

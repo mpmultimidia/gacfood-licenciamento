@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "../tipos/database.ts";
-import { ambiente } from "../config/ambiente.ts";
+import type { Database } from "../tipos/database.js";
+import { ambiente } from "../config/ambiente.js";
 
 export const supabase = createClient<
   Database,

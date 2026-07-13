@@ -1,8 +1,8 @@
-import { supabase } from "../supabase/conexao.ts";
+import { supabase } from "../supabase/conexao.js";
 import {
   buscarLicencaAtivaDaEmpresa,
   licencaEstaValida
-} from "./validacao.ts";
+} from "./validacao.js";
 
 
 export interface Permissao {
