@@ -1,37 +1,27 @@
 import { supabase } from "../supabase/conexao.js";
 
-export async function verificarSaudeBanco() {
-  const inicio = Date.now();
-
+export async function verificarSaudeBanco(): Promise<boolean> {
   try {
     const { error } = await supabase
       .from("empresas")
       .select("id")
       .limit(1);
 
-    const tempoResposta = `${Date.now() - inicio}ms`;
+    return !error;
+  } catch {
+    return false;
+  }
+}
 
-    if (error) {
-      return {
-        banco: "erro",
-        tempoResposta,
-        erro: error.message,
-      };
-    }
+export async function verificarSaudeLicenciamento(): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("licencas")
+      .select("id")
+      .limit(1);
 
-    return {
-      banco: "online",
-      tempoResposta,
-      erro: null,
-    };
-  } catch (erro) {
-    return {
-      banco: "erro",
-      tempoResposta: `${Date.now() - inicio}ms`,
-      erro:
-        erro instanceof Error
-          ? erro.message
-          : "Erro desconhecido",
-    };
+    return !error;
+  } catch {
+    return false;
   }
 }
