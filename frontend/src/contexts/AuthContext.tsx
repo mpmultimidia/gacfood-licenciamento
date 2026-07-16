@@ -6,130 +6,75 @@ import {
     ReactNode
 } from "react";
 
-
 interface Usuario {
-
-    id:string;
-
-    nome:string;
-
-    email:string;
-
-    perfil?:string;
-
+    id: string;
+    login: string;
+    nome: string | null;
+    perfil?: string;
 }
-
-
 
 interface AuthContexto {
-
-    usuario:Usuario|null;
-
-    autenticado:boolean;
-
-    entrar:(usuario:Usuario)=>void;
-
-    sair:()=>void;
-
+    usuario: Usuario | null;
+    autenticado: boolean;
+    entrar: (usuario: Usuario, token: string) => void;
+    sair: () => void;
 }
 
-
-
 const AuthContext =
-    createContext<AuthContexto|null>(null);
-
-
+    createContext<AuthContexto | null>(null);
 
 export function AuthProvider({
-
     children
+}: {
+    children: ReactNode;
+}) {
 
-}:{
+    const [usuario, setUsuario] =
+        useState<Usuario | null>(null);
 
-    children:ReactNode;
-
-}){
-
-
-    const [usuario,setUsuario] =
-        useState<Usuario|null>(null);
-
-
-
-    useEffect(()=>{
-
+    useEffect(() => {
 
         const salvo =
-            localStorage.getItem(
-                "gac_usuario"
-            );
+            localStorage.getItem("gac_usuario");
 
-
-        if(salvo){
-
-            setUsuario(
-                JSON.parse(salvo)
-            );
-
+        if (salvo) {
+            // O objeto salvo tem { ...usuario, token } — o interceptor de
+            // api/cliente.ts" lê o "token" direto daqui.
+            setUsuario(JSON.parse(salvo));
         }
 
+    }, []);
 
-    },[]);
+    function entrar(usuario: Usuario, token: string) {
 
-
-
-
-    function entrar(usuario:Usuario){
-
+        const dados = { ...usuario, token };
 
         localStorage.setItem(
-
             "gac_usuario",
-
-            JSON.stringify(usuario)
-
+            JSON.stringify(dados)
         );
-
 
         setUsuario(usuario);
 
-
     }
 
+    function sair() {
 
-
-
-    function sair(){
-
-
-        localStorage.removeItem(
-            "gac_usuario"
-        );
-
+        localStorage.removeItem("gac_usuario");
 
         setUsuario(null);
 
-
     }
-
-
-
 
     return (
 
         <AuthContext.Provider
 
             value={{
-
                 usuario,
-
-                autenticado:
-                    !!usuario,
-
+                autenticado: !!usuario,
                 entrar,
-
                 sair
-
             }}
 
         >
@@ -142,26 +87,17 @@ export function AuthProvider({
 
 }
 
-
-
-export function useAuth(){
-
+export function useAuth() {
 
     const contexto =
         useContext(AuthContext);
 
-
-
-    if(!contexto){
-
+    if (!contexto) {
         throw new Error(
             "useAuth deve ser usado dentro do AuthProvider"
         );
-
     }
 
-
     return contexto;
-
 
 }
