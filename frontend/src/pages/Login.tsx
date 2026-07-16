@@ -2,79 +2,75 @@ import {
     useState
 } from "react";
 
-
 import {
     useNavigate
 } from "react-router-dom";
-
 
 import {
     LockKeyhole
 } from "lucide-react";
 
-
 import {
     useAuth
 } from "../contexts/AuthContext";
 
+import cliente from "../api/cliente";
 
-
-export default function Login(){
-
+export default function Login() {
 
     const navigate =
         useNavigate();
-
-
 
     const {
         entrar
     } = useAuth();
 
-
-
-    const [email,setEmail] =
+    const [login, setLogin] =
         useState("");
 
-
-
-    const [senha,setSenha] =
+    const [senha, setSenha] =
         useState("");
 
+    const [carregando, setCarregando] =
+        useState(false);
 
+    const [erro, setErro] =
+        useState("");
 
-
-
-    function login(e:React.FormEvent){
-
+    async function autenticar(e: React.FormEvent) {
 
         e.preventDefault();
 
+        setErro("");
+        setCarregando(true);
 
+        try {
 
-        entrar({
+            const resposta = await cliente.login(login, senha);
 
-            id:"1",
+            if (!resposta.data.ok) {
+                setErro(resposta.data.erro || "Login ou senha inválidos.");
+                return;
+            }
 
-            nome:"Administrador",
+            entrar(resposta.data.usuario, resposta.data.token);
 
-            email,
+            navigate("/dashboard");
 
-            perfil:"ADMIN"
+        } catch (err: any) {
 
-        });
+            setErro(
+                err.response?.data?.erro ||
+                "Não foi possível conectar ao servidor. Tente novamente."
+            );
 
+        } finally {
 
+            setCarregando(false);
 
-        navigate(
-            "/dashboard"
-        );
-
+        }
 
     }
-
-
-
 
     return (
 
@@ -82,50 +78,48 @@ export default function Login(){
 
             style={{
 
-                minHeight:"100vh",
+                minHeight: "100vh",
 
-                display:"flex",
+                display: "flex",
 
-                justifyContent:"center",
+                justifyContent: "center",
 
-                alignItems:"center",
+                alignItems: "center",
 
-                background:"#f3f4f6"
+                background: "#f3f4f6"
 
             }}
 
         >
 
-
             <form
 
-                onSubmit={login}
+                onSubmit={autenticar}
 
                 style={{
 
-                    width:380,
+                    width: 380,
 
-                    background:"#ffffff",
+                    background: "#ffffff",
 
-                    padding:35,
+                    padding: 35,
 
-                    borderRadius:15,
+                    borderRadius: 15,
 
                     boxShadow:
-                    "0 10px 30px rgba(0,0,0,.08)"
+                        "0 10px 30px rgba(0,0,0,.08)"
 
                 }}
 
             >
 
-
                 <div
 
                     style={{
 
-                        textAlign:"center",
+                        textAlign: "center",
 
-                        marginBottom:25
+                        marginBottom: 25
 
                     }}
 
@@ -139,13 +133,11 @@ export default function Login(){
 
                     />
 
-
                     <h2>
 
                         GACFOOD
 
                     </h2>
-
 
                     <p>
 
@@ -153,36 +145,46 @@ export default function Login(){
 
                     </p>
 
-
                 </div>
 
-
+                {erro && (
+                    <div
+                        style={{
+                            background: "#fee2e2",
+                            color: "#b91c1c",
+                            padding: 10,
+                            borderRadius: 8,
+                            marginBottom: 15,
+                            fontSize: 14,
+                        }}
+                    >
+                        {erro}
+                    </div>
+                )}
 
                 <input
 
-                    placeholder="E-mail"
+                    placeholder="Login"
 
-                    value={email}
+                    value={login}
 
-                    onChange={(e)=>
-                        setEmail(
+                    onChange={(e) =>
+                        setLogin(
                             e.target.value
                         )
                     }
 
                     style={{
 
-                        width:"100%",
+                        width: "100%",
 
-                        padding:12,
+                        padding: 12,
 
-                        marginBottom:15
+                        marginBottom: 15
 
                     }}
 
                 />
-
-
 
                 <input
 
@@ -192,7 +194,7 @@ export default function Login(){
 
                     value={senha}
 
-                    onChange={(e)=>
+                    onChange={(e) =>
                         setSenha(
                             e.target.value
                         )
@@ -200,47 +202,47 @@ export default function Login(){
 
                     style={{
 
-                        width:"100%",
+                        width: "100%",
 
-                        padding:12,
+                        padding: 12,
 
-                        marginBottom:20
+                        marginBottom: 20
 
                     }}
 
                 />
 
-
-
                 <button
+
+                    disabled={carregando}
 
                     style={{
 
-                        width:"100%",
+                        width: "100%",
 
-                        padding:12,
+                        padding: 12,
 
-                        background:"#2563eb",
+                        background: "#2563eb",
 
-                        color:"#fff",
+                        color: "#fff",
 
-                        border:"none",
+                        border: "none",
 
-                        borderRadius:8,
+                        borderRadius: 8,
 
-                        fontWeight:600
+                        fontWeight: 600,
+
+                        opacity: carregando ? 0.7 : 1,
 
                     }}
 
                 >
 
-                    Entrar
+                    {carregando ? "Entrando..." : "Entrar"}
 
                 </button>
 
-
             </form>
-
 
         </div>
 
