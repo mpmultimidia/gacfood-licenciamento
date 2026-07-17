@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import { buscarEmpresaPorCodigo, buscarLicencaAtivaDaEmpresa, licencaEstaValida } from "../../licenciamento/validacao.ts";
 import { resgatarCodigoAtivacao } from "../../licenciamento/codigoAtivacao.ts";
 import { garantirCredenciaisRestaurante } from "../../supabase/authRestaurante.ts";
+import { listarFuncionalidadesDoPlano } from "../../servicos/funcionalidadesPlano.ts";
 
 // ─────────────────────────────────────────────────────────────────────────
 // CAMINHO AUTOMÁTICO (com internet)
@@ -59,9 +60,12 @@ export async function ativarLicenca(
       gerarNovaSenha: true,
     });
 
+    const modulos = await listarFuncionalidadesDoPlano((licenca as any).plano_id);
+
     res.json({
       ok: true,
       codigo_licenca: codigoEmpresa,
+      modulos,
       credenciais,
     });
   } catch (e: any) {
