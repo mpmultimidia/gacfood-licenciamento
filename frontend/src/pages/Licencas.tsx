@@ -44,6 +44,20 @@ export default function Licencas() {
 
     const [licencaCriada,setLicencaCriada] = useState<any>(null);
 
+    const [codigoAtivacao,setCodigoAtivacao] = useState<{codigo:string; expira_em:string} | null>(null);
+
+    const [gerandoCodigo,setGerandoCodigo] = useState(false);
+
+    const [erroCodigoAtivacao,setErroCodigoAtivacao] = useState("");
+
+    const [codigoLinhaAberto,setCodigoLinhaAberto] = useState<LicencaDTO | null>(null);
+
+    const [codigoLinha,setCodigoLinha] = useState<{codigo:string; expira_em:string} | null>(null);
+
+    const [gerandoCodigoLinha,setGerandoCodigoLinha] = useState(false);
+
+    const [erroCodigoLinha,setErroCodigoLinha] = useState("");
+
 
 
     async function carregarLicencas(){
@@ -92,6 +106,8 @@ export default function Licencas() {
         setForm({ empresa_id: "", plano_id: "" });
         setErroForm("");
         setLicencaCriada(null);
+        setCodigoAtivacao(null);
+        setErroCodigoAtivacao("");
         setModalAberto(true);
 
         try{
@@ -166,6 +182,128 @@ export default function Licencas() {
         }finally{
 
             setSalvando(false);
+
+        }
+
+    }
+
+
+
+    async function gerarCodigoInstalacao(){
+
+        const empresa = empresas.find(
+            (e)=> e.id === form.empresa_id
+        );
+
+        if(!empresa){
+
+            setErroCodigoAtivacao(
+                "Empresa não encontrada."
+            );
+
+            return;
+
+        }
+
+        try{
+
+            setGerandoCodigo(true);
+            setErroCodigoAtivacao("");
+
+            const resposta =
+                await api.solicitarCodigoAtivacao(
+                    empresa.codigo
+                );
+
+            setCodigoAtivacao(
+                resposta.data.codigoAtivacao
+            );
+
+        }catch(erro: any){
+
+            console.error(
+                "Erro ao gerar código de instalação",
+                erro
+            );
+
+            setErroCodigoAtivacao(
+                erro?.response?.data?.erro
+                ??
+                "Não foi possível gerar o código. Tente novamente."
+            );
+
+        }finally{
+
+            setGerandoCodigo(false);
+
+        }
+
+    }
+
+
+
+    function abrirCodigoLinha(licenca: LicencaDTO){
+
+        setCodigoLinhaAberto(licenca);
+        setCodigoLinha(null);
+        setErroCodigoLinha("");
+
+    }
+
+
+
+    function fecharCodigoLinha(){
+
+        if(gerandoCodigoLinha) return;
+
+        setCodigoLinhaAberto(null);
+
+    }
+
+
+
+    async function gerarCodigoDaLinha(){
+
+        if(!codigoLinhaAberto?.empresaCodigo){
+
+            setErroCodigoLinha(
+                "Código da empresa não encontrado."
+            );
+
+            return;
+
+        }
+
+        try{
+
+            setGerandoCodigoLinha(true);
+            setErroCodigoLinha("");
+
+            const resposta =
+                await api.solicitarCodigoAtivacao(
+                    codigoLinhaAberto.empresaCodigo
+                );
+
+            setCodigoLinha(
+                resposta.data.codigoAtivacao
+            );
+
+        }catch(erro: any){
+
+            console.error(
+                "Erro ao gerar código de instalação",
+                erro
+            );
+
+            setErroCodigoLinha(
+                erro?.response?.data?.erro
+                ??
+                "Não foi possível gerar o código. Tente novamente."
+            );
+
+        }finally{
+
+            setGerandoCodigoLinha(false);
 
         }
 
@@ -510,6 +648,29 @@ export default function Licencas() {
 
                                         <button
 
+                                            onClick={()=> abrirCodigoLinha(licenca)}
+
+                                            title="Gerar código de instalação"
+
+                                            style={{
+                                                border:"none",
+                                                background:"#f0fdf4",
+                                                padding:8,
+                                                borderRadius:6
+                                            }}
+
+                                        >
+
+                                            <KeyRound
+                                                size={16}
+                                                color="#16a34a"
+                                            />
+
+                                        </button>
+
+
+                                        <button
+
                                             style={{
                                                 border:"none",
                                                 background:"#eff6ff",
@@ -705,6 +866,182 @@ export default function Licencas() {
                                         Copiar
 
                                     </button>
+
+                                </div>
+
+
+                                <div
+
+                                    style={{
+                                        borderTop:"1px solid #e5e7eb",
+                                        paddingTop:16,
+                                        marginBottom:20
+                                    }}
+
+                                >
+
+                                    <div
+
+                                        style={{
+                                            fontSize:14,
+                                            color:"#374151",
+                                            marginBottom:10
+                                        }}
+
+                                    >
+
+                                        No instalador do GACFOOD, o cliente vai pedir um <b>código de 6 dígitos</b> (diferente do código da licença acima). Gere aqui e envie por WhatsApp:
+
+                                    </div>
+
+
+                                    {
+
+                                    erroCodigoAtivacao &&
+
+                                    (
+
+                                        <div
+
+                                            style={{
+                                                background:"#fef2f2",
+                                                color:"#dc2626",
+                                                padding:"10px 14px",
+                                                borderRadius:8,
+                                                marginBottom:12,
+                                                fontSize:14
+                                            }}
+
+                                        >
+
+                                            {erroCodigoAtivacao}
+
+                                        </div>
+
+                                    )
+
+                                    }
+
+
+                                    {
+
+                                    codigoAtivacao
+
+                                    ?
+
+                                    (
+
+                                        <div
+
+                                            style={{
+                                                display:"flex",
+                                                alignItems:"center",
+                                                gap:10,
+                                                border:"1px solid #e5e7eb",
+                                                borderRadius:8,
+                                                padding:"14px 16px"
+                                            }}
+
+                                        >
+
+                                            <span
+
+                                                style={{
+                                                    fontFamily:"monospace",
+                                                    fontSize:22,
+                                                    fontWeight:700,
+                                                    letterSpacing:3,
+                                                    flex:1
+                                                }}
+
+                                            >
+
+                                                {codigoAtivacao.codigo}
+
+                                            </span>
+
+
+                                            <button
+
+                                                onClick={()=>
+                                                    navigator.clipboard.writeText(
+                                                        codigoAtivacao.codigo
+                                                    )
+                                                }
+
+                                                style={{
+                                                    border:"1px solid #e5e7eb",
+                                                    background:"#f9fafb",
+                                                    padding:"8px 14px",
+                                                    borderRadius:6,
+                                                    fontWeight:600,
+                                                    fontSize:13
+                                                }}
+
+                                            >
+
+                                                Copiar
+
+                                            </button>
+
+                                        </div>
+
+                                    )
+
+                                    :
+
+                                    (
+
+                                        <button
+
+                                            onClick={gerarCodigoInstalacao}
+
+                                            disabled={gerandoCodigo}
+
+                                            style={{
+                                                border:"1px solid #2563eb",
+                                                background:"#eff6ff",
+                                                color:"#2563eb",
+                                                padding:"10px 18px",
+                                                borderRadius:8,
+                                                fontWeight:600,
+                                                width:"100%"
+                                            }}
+
+                                        >
+
+                                            {gerandoCodigo ? "Gerando..." : "Gerar código de instalação"}
+
+                                        </button>
+
+                                    )
+
+                                    }
+
+
+                                    {
+
+                                    codigoAtivacao &&
+
+                                    (
+
+                                        <div
+
+                                            style={{
+                                                fontSize:12,
+                                                color:"#9ca3af",
+                                                marginTop:8
+                                            }}
+
+                                        >
+
+                                            Válido até {new Date(codigoAtivacao.expira_em).toLocaleTimeString('pt-BR')}.
+
+                                        </div>
+
+                                    )
+
+                                    }
 
                                 </div>
 
@@ -961,6 +1298,255 @@ export default function Licencas() {
                         )
 
                         }
+
+                    </div>
+
+                </div>
+
+            )
+
+            }
+
+
+            {
+
+            codigoLinhaAberto &&
+
+            (
+
+                <div
+
+                    onClick={fecharCodigoLinha}
+
+                    style={{
+                        position:"fixed",
+                        inset:0,
+                        background:"rgba(0,0,0,.45)",
+                        display:"flex",
+                        alignItems:"center",
+                        justifyContent:"center",
+                        zIndex:50
+                    }}
+
+                >
+
+                    <div
+
+                        onClick={(e)=>e.stopPropagation()}
+
+                        style={{
+                            background:"#ffffff",
+                            borderRadius:14,
+                            padding:26,
+                            width:400,
+                            maxWidth:"92vw"
+                        }}
+
+                    >
+
+                        <h3
+
+                            style={{
+                                fontSize:18,
+                                fontWeight:700,
+                                marginBottom:6
+                            }}
+
+                        >
+
+                            Código de instalação
+
+                        </h3>
+
+
+                        <p
+
+                            style={{
+                                color:"#6b7280",
+                                fontSize:14,
+                                marginBottom:16
+                            }}
+
+                        >
+
+                            {codigoLinhaAberto.empresa}
+
+                        </p>
+
+
+                        {
+
+                        erroCodigoLinha &&
+
+                        (
+
+                            <div
+
+                                style={{
+                                    background:"#fef2f2",
+                                    color:"#dc2626",
+                                    padding:"10px 14px",
+                                    borderRadius:8,
+                                    marginBottom:16,
+                                    fontSize:14
+                                }}
+
+                            >
+
+                                {erroCodigoLinha}
+
+                            </div>
+
+                        )
+
+                        }
+
+
+                        {
+
+                        codigoLinha
+
+                        ?
+
+                        (
+
+                            <>
+
+                            <div
+
+                                style={{
+                                    display:"flex",
+                                    alignItems:"center",
+                                    gap:10,
+                                    border:"1px solid #e5e7eb",
+                                    borderRadius:8,
+                                    padding:"14px 16px",
+                                    marginBottom:8
+                                }}
+
+                            >
+
+                                <span
+
+                                    style={{
+                                        fontFamily:"monospace",
+                                        fontSize:22,
+                                        fontWeight:700,
+                                        letterSpacing:3,
+                                        flex:1
+                                    }}
+
+                                >
+
+                                    {codigoLinha.codigo}
+
+                                </span>
+
+
+                                <button
+
+                                    onClick={()=>
+                                        navigator.clipboard.writeText(
+                                            codigoLinha.codigo
+                                        )
+                                    }
+
+                                    style={{
+                                        border:"1px solid #e5e7eb",
+                                        background:"#f9fafb",
+                                        padding:"8px 14px",
+                                        borderRadius:6,
+                                        fontWeight:600,
+                                        fontSize:13
+                                    }}
+
+                                >
+
+                                    Copiar
+
+                                </button>
+
+                            </div>
+
+
+                            <div
+
+                                style={{
+                                    fontSize:12,
+                                    color:"#9ca3af",
+                                    marginBottom:20
+                                }}
+
+                            >
+
+                                Válido até {new Date(codigoLinha.expira_em).toLocaleTimeString('pt-BR')}.
+
+                            </div>
+
+                            </>
+
+                        )
+
+                        :
+
+                        (
+
+                            <button
+
+                                onClick={gerarCodigoDaLinha}
+
+                                disabled={gerandoCodigoLinha}
+
+                                style={{
+                                    border:"1px solid #2563eb",
+                                    background:"#eff6ff",
+                                    color:"#2563eb",
+                                    padding:"10px 18px",
+                                    borderRadius:8,
+                                    fontWeight:600,
+                                    width:"100%",
+                                    marginBottom:20
+                                }}
+
+                            >
+
+                                {gerandoCodigoLinha ? "Gerando..." : "Gerar código"}
+
+                            </button>
+
+                        )
+
+                        }
+
+
+                        <div
+
+                            style={{
+                                display:"flex",
+                                justifyContent:"flex-end"
+                            }}
+
+                        >
+
+                            <button
+
+                                onClick={fecharCodigoLinha}
+
+                                style={{
+                                    border:"1px solid #e5e7eb",
+                                    background:"#ffffff",
+                                    padding:"10px 18px",
+                                    borderRadius:8,
+                                    fontWeight:600
+                                }}
+
+                            >
+
+                                Fechar
+
+                            </button>
+
+                        </div>
 
                     </div>
 
