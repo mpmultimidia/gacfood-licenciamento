@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { ambiente } from "../../config/ambiente.ts";
+import { ambiente } from "../../config/ambiente.js";
 
 export interface UsuarioAutenticado {
   id: string;
