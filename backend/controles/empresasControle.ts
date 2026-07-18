@@ -40,14 +40,20 @@ export async function listarEmpresas(
     req.query.busca as string | undefined
   )?.trim();
 
+  // CORREÇÃO: antes consultava a view "vw_empresas_licencas", que não
+  // devolve "id" nem "nome_fantasia" no formato que a tela espera —
+  // por isso a lista aparecia vazia/quebrada. Agora consulta a tabela
+  // "empresas" diretamente, com todos os campos que o cadastro usa.
   let consulta = supabase
-    .from("vw_empresas_licencas")
-    .select("*")
+    .from("empresas")
+    .select(
+      "id, codigo, razao_social, nome_fantasia, cnpj, telefone, whatsapp, email, cidade, uf, status, observacoes, plano_id, limite_dispositivos, criado_em"
+    )
     .order("nome_fantasia");
 
   if (busca) {
     consulta = consulta.or(
-      `codigo.ilike.%${busca}%,nome_fantasia.ilike.%${busca}%`
+      `codigo.ilike.%${busca}%,nome_fantasia.ilike.%${busca}%,cnpj.ilike.%${busca}%`
     );
   }
 
@@ -63,5 +69,89 @@ export async function listarEmpresas(
   res.json({
     ok: true,
     empresas: data ?? [],
+  });
+}
+
+/**
+ * POST /api/empresas   (chave admin)
+ * Cadastra uma nova empresa licenciada. O código único da empresa é
+ * gerado pela função lic.gerar_codigo_empresa() do banco.
+ */
+export async function criarEmpresa(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const {
+    razao_social,
+    nome_fantasia,
+    cnpj,
+    telefone,
+    whatsapp,
+    email,
+    cidade,
+    uf,
+    observacoes,
+    plano_id,
+    limite_dispositivos,
+  } = req.body as {
+    razao_social?: string;
+    nome_fantasia?: string;
+    cnpj?: string;
+    telefone?: string;
+    whatsapp?: string;
+    email?: string;
+    cidade?: string;
+    uf?: string;
+    observacoes?: string;
+    plano_id?: string;
+    limite_dispositivos?: number;
+  };
+
+  if (!razao_social || !nome_fantasia || !whatsapp) {
+    res.status(400).json({
+      ok: false,
+      erro: "Informe razão social, nome fantasia e WhatsApp.",
+    });
+    return;
+  }
+
+  const {
+    data: codigoGerado,
+    error: erroCodigo,
+  } = await supabase.rpc("gerar_codigo_empresa");
+
+  if (erroCodigo) {
+    throw erroCodigo;
+  }
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from("empresas")
+    .insert({
+      codigo: codigoGerado as unknown as string,
+      razao_social,
+      nome_fantasia,
+      cnpj: cnpj || null,
+      telefone: telefone || null,
+      whatsapp,
+      email: email || null,
+      cidade: cidade || null,
+      uf: uf || null,
+      observacoes: observacoes || null,
+      plano_id: plano_id || null,
+      limite_dispositivos: limite_dispositivos ?? null,
+    } as any)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  res.json({
+    ok: true,
+    empresa: data,
   });
 }
