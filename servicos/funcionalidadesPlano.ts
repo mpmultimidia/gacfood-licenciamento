@@ -1,5 +1,5 @@
 // servicos/funcionalidadesPlano.ts
-import { supabase } from "../supabase/conexao.ts";
+import { supabase } from "../supabase/conexao.js";
 
 /**
  * Retorna os códigos das funcionalidades (módulos) liberadas por um plano —

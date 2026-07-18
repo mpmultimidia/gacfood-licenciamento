@@ -1,5 +1,5 @@
-import { supabase } from "../supabase/conexao.ts";
-import { listarFuncionalidadesDoPlano } from "./funcionalidadesPlano.ts";
+import { supabase } from "../supabase/conexao.js";
+import { listarFuncionalidadesDoPlano } from "./funcionalidadesPlano.js";
 
 // CORREÇÃO: esta função consultava as colunas "codigo" e "ativa", que não
 // existem na tabela lic.licencas" (as colunas reais são "codigo_licenca"
