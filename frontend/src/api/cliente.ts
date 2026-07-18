@@ -32,6 +32,33 @@ export interface NovaEmpresaDTO {
     limite_dispositivos?: number;
 }
 
+export interface LicencaDTO {
+    id: string;
+    empresaId: string;
+    planoId: string;
+    empresa: string;
+    plano: string;
+    codigo_licenca: string;
+    versao: string;
+    status: string;
+    emitida_em: string;
+    expira_em: string;
+}
+
+export interface NovaLicencaDTO {
+    empresa_id: string;
+    plano_id: string;
+    dias_validade?: number;
+}
+
+export interface PlanoDTO {
+    id: string;
+    nome: string;
+    descricao: string | null;
+    valor: number;
+    ativo: boolean;
+}
+
 const api = axios.create({
 
     baseURL:
@@ -157,6 +184,17 @@ const cliente = {
 
 
 
+    criarLicenca(dados: NovaLicencaDTO){
+
+        return api.post(
+            "/licencas",
+            dados
+        );
+
+    },
+
+
+
     listarModulos(){
 
         return api.get(
@@ -206,7 +244,7 @@ const cliente = {
     listarHistorico(){
 
         return api.get(
-            "/historico"
+            "/licencas/historico"
         );
 
     },
