@@ -42,6 +42,8 @@ export default function Licencas() {
         plano_id: ""
     });
 
+    const [licencaCriada,setLicencaCriada] = useState<any>(null);
+
 
 
     async function carregarLicencas(){
@@ -89,6 +91,7 @@ export default function Licencas() {
 
         setForm({ empresa_id: "", plano_id: "" });
         setErroForm("");
+        setLicencaCriada(null);
         setModalAberto(true);
 
         try{
@@ -141,9 +144,9 @@ export default function Licencas() {
             setSalvando(true);
             setErroForm("");
 
-            await api.criarLicenca(form);
+            const resposta = await api.criarLicenca(form);
 
-            setModalAberto(false);
+            setLicencaCriada(resposta.data.licenca ?? null);
 
             await carregarLicencas();
 
@@ -351,6 +354,10 @@ export default function Licencas() {
                                 </th>
 
                                 <th>
+                                    Código
+                                </th>
+
+                                <th>
                                     Plano
                                 </th>
 
@@ -383,7 +390,7 @@ export default function Licencas() {
 
                                 <td
 
-                                    colSpan={4}
+                                    colSpan={5}
 
                                     style={{
                                         textAlign:"center",
@@ -437,6 +444,20 @@ export default function Licencas() {
 
                                     </div>
 
+
+                                </td>
+
+
+                                <td
+
+                                    style={{
+                                        fontFamily:"monospace",
+                                        fontSize:13
+                                    }}
+
+                                >
+
+                                    {licenca.codigo_licenca ?? "-"}
 
                                 </td>
 
@@ -604,6 +625,134 @@ export default function Licencas() {
                             Nova licença
 
                         </h3>
+
+
+                        {
+
+                        licencaCriada &&
+
+                        (
+
+                            <div>
+
+                                <div
+
+                                    style={{
+                                        background:"#dcfce7",
+                                        color:"#166534",
+                                        padding:"14px 16px",
+                                        borderRadius:8,
+                                        marginBottom:16,
+                                        fontSize:14
+                                    }}
+
+                                >
+
+                                    Licença emitida com sucesso! Envie este código para o cliente:
+
+                                </div>
+
+
+                                <div
+
+                                    style={{
+                                        display:"flex",
+                                        alignItems:"center",
+                                        gap:10,
+                                        border:"1px solid #e5e7eb",
+                                        borderRadius:8,
+                                        padding:"14px 16px",
+                                        marginBottom:20
+                                    }}
+
+                                >
+
+                                    <span
+
+                                        style={{
+                                            fontFamily:"monospace",
+                                            fontSize:18,
+                                            fontWeight:700,
+                                            flex:1
+                                        }}
+
+                                    >
+
+                                        {licencaCriada.codigo_licenca}
+
+                                    </span>
+
+
+                                    <button
+
+                                        onClick={()=>
+                                            navigator.clipboard.writeText(
+                                                licencaCriada.codigo_licenca
+                                            )
+                                        }
+
+                                        style={{
+                                            border:"1px solid #e5e7eb",
+                                            background:"#f9fafb",
+                                            padding:"8px 14px",
+                                            borderRadius:6,
+                                            fontWeight:600,
+                                            fontSize:13
+                                        }}
+
+                                    >
+
+                                        Copiar
+
+                                    </button>
+
+                                </div>
+
+
+                                <div
+
+                                    style={{
+                                        display:"flex",
+                                        justifyContent:"flex-end"
+                                    }}
+
+                                >
+
+                                    <button
+
+                                        onClick={fecharModal}
+
+                                        style={{
+                                            border:"none",
+                                            background:"#2563eb",
+                                            color:"#ffffff",
+                                            padding:"10px 18px",
+                                            borderRadius:8,
+                                            fontWeight:600
+                                        }}
+
+                                    >
+
+                                        Fechar
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        )
+
+                        }
+
+
+                        {
+
+                        !licencaCriada &&
+
+                        (
+
+                        <>
 
 
                         {
@@ -805,6 +954,13 @@ export default function Licencas() {
                             </button>
 
                         </div>
+
+
+                        </>
+
+                        )
+
+                        }
 
                     </div>
 
