@@ -16,6 +16,8 @@ import {
   listarHistorico,
   listarLicencas,
   criarLicenca,
+  atualizarLicenca,
+  excluirLicenca,
 } from "../controles/licencasControle.js";
 
 
@@ -34,6 +36,20 @@ licencasRotas.post(
   "/",
   autenticarAdmin,
   envolverAsync(criarLicenca)
+);
+
+
+licencasRotas.put(
+  "/:id",
+  autenticarAdmin,
+  envolverAsync(atualizarLicenca)
+);
+
+
+licencasRotas.delete(
+  "/:id",
+  autenticarAdmin,
+  envolverAsync(excluirLicenca)
 );
 
 
