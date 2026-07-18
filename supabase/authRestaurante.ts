@@ -4,7 +4,7 @@
 // `empresas`) e o sistema GACFOOD em si (schema "public", onde vive a tabela
 // `restaurantes` e o Row Level Security que isola os dados de cada cliente).
 
-import { supabase } from "./conexao.ts";
+import { supabase } from "./conexao.js";
 import crypto from "crypto";
 
 export interface CredenciaisRestaurante {
