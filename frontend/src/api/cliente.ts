@@ -1,5 +1,37 @@
 import axios from "axios";
 
+export interface EmpresaDTO {
+    id: string;
+    codigo: string;
+    razao_social: string;
+    nome_fantasia: string;
+    cnpj: string | null;
+    telefone: string | null;
+    whatsapp: string;
+    email: string | null;
+    cidade: string | null;
+    uf: string | null;
+    status: string;
+    observacoes: string | null;
+    plano_id: string | null;
+    limite_dispositivos: number | null;
+    criado_em: string;
+}
+
+export interface NovaEmpresaDTO {
+    razao_social: string;
+    nome_fantasia: string;
+    whatsapp: string;
+    cnpj?: string;
+    telefone?: string;
+    email?: string;
+    cidade?: string;
+    uf?: string;
+    observacoes?: string;
+    plano_id?: string;
+    limite_dispositivos?: number;
+}
+
 const api = axios.create({
 
     baseURL:
@@ -78,6 +110,17 @@ const cliente = {
 
         return api.get(
             "/empresas"
+        );
+
+    },
+
+
+
+    criarEmpresa(dados: NovaEmpresaDTO){
+
+        return api.post(
+            "/empresas",
+            dados
         );
 
     },
