@@ -37,6 +37,7 @@ export interface LicencaDTO {
     empresaId: string;
     planoId: string;
     empresa: string;
+    empresaCodigo: string | null;
     plano: string;
     codigo_licenca: string;
     versao: string;
@@ -189,6 +190,17 @@ const cliente = {
         return api.post(
             "/licencas",
             dados
+        );
+
+    },
+
+
+
+    solicitarCodigoAtivacao(codigoEmpresa: string){
+
+        return api.post(
+            "/licencas/solicitar-codigo",
+            { codigoEmpresa }
         );
 
     },
