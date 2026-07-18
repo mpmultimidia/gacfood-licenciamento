@@ -166,6 +166,48 @@ export default function Licencas() {
 
             await carregarLicencas();
 
+            // Gera o código de 6 dígitos automaticamente, sem precisar
+            // de um clique a mais — é o que o instalador do GACFOOD pede.
+            const empresa = empresas.find(
+                (e)=> e.id === form.empresa_id
+            );
+
+            if(empresa){
+
+                try{
+
+                    setGerandoCodigo(true);
+
+                    const respostaCodigo =
+                        await api.solicitarCodigoAtivacao(
+                            empresa.codigo
+                        );
+
+                    setCodigoAtivacao(
+                        respostaCodigo.data.codigoAtivacao
+                    );
+
+                }catch(erroCodigo: any){
+
+                    console.error(
+                        "Erro ao gerar código de instalação",
+                        erroCodigo
+                    );
+
+                    setErroCodigoAtivacao(
+                        erroCodigo?.response?.data?.erro
+                        ??
+                        "Licença emitida, mas não foi possível gerar o código de instalação. Use o botão abaixo para tentar de novo."
+                    );
+
+                }finally{
+
+                    setGerandoCodigo(false);
+
+                }
+
+            }
+
         }catch(erro: any){
 
             console.error(
