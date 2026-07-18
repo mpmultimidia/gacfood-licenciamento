@@ -1,6 +1,6 @@
 // licenciamento/codigoAtivacao.ts
-import { supabase } from "../supabase/conexao.ts";
-import { ambiente } from "../config/ambiente.ts";
+import { supabase } from "../supabase/conexao.js";
+import { ambiente } from "../config/ambiente.js";
 
 function gerarCodigoNumerico(tamanho = 6): string {
   let codigo = "";

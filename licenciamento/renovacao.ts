@@ -1,8 +1,8 @@
 // licenciamento/renovacao.ts
-import { supabase } from "../supabase/conexao.ts";
-import { garantirCredenciaisRestaurante } from "../supabase/authRestaurante.ts";
-import { listarFuncionalidadesDoPlano } from "../servicos/funcionalidadesPlano.ts";
-import { ambiente } from "../config/ambiente.ts";
+import { supabase } from "../supabase/conexao.js";
+import { garantirCredenciaisRestaurante } from "../supabase/authRestaurante.js";
+import { listarFuncionalidadesDoPlano } from "../servicos/funcionalidadesPlano.js";
+import { ambiente } from "../config/ambiente.js";
 
 function gerarCodigoAtivacaoTexto(): string {
   let codigo = "";
