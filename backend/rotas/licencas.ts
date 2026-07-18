@@ -1,4 +1,4 @@
-// api/rotas/licencas.ts
+// backend/rotas/licencas.ts
 
 import { Router } from "express";
 import { envolverAsync } from "../middleware/tratarErros.js";
