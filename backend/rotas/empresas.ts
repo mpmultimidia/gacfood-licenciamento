@@ -8,6 +8,7 @@ import {
 import {
   consultarEmpresa,
   listarEmpresas,
+  criarEmpresa,
 } from "../controles/empresasControle.js";
 
 const router = Router();
@@ -22,6 +23,12 @@ router.get(
   "/",
   autenticarAdmin,
   envolverAsync(listarEmpresas)
+);
+
+router.post(
+  "/",
+  autenticarAdmin,
+  envolverAsync(criarEmpresa)
 );
 
 export default router;
