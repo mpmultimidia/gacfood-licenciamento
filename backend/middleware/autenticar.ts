@@ -23,12 +23,6 @@ export function autenticarCliente(
 ): void {
   const chave = req.header("x-api-key");
 
-  console.log(
-    `[auth-diagnostico] recebida: "${chave}" (tamanho ${chave?.length ?? 0}, últimos 4: ${chave?.slice(-4)}) | ` +
-    `esperada: (tamanho ${ambiente.apiKeyCliente?.length ?? 0}, últimos 4: ${ambiente.apiKeyCliente?.slice(-4)}) | ` +
-    `bate: ${chave === ambiente.apiKeyCliente}`
-  );
-
   if (!chave || chave !== ambiente.apiKeyCliente) {
     res.status(401).json({
       ok: false,
