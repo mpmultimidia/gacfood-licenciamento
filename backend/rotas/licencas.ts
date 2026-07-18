@@ -1,4 +1,4 @@
-// backend/rotas/licencas.ts
+// api/rotas/licencas.ts
 
 import { Router } from "express";
 import { envolverAsync } from "../middleware/tratarErros.js";
@@ -14,10 +14,27 @@ import {
   statusLicenca,
   listarVencendo,
   listarHistorico,
+  listarLicencas,
+  criarLicenca,
 } from "../controles/licencasControle.js";
 
 
 export const licencasRotas = Router();
+
+
+// chamado pelo painel administrativo — listar / emitir licenças
+licencasRotas.get(
+  "/",
+  autenticarAdmin,
+  envolverAsync(listarLicencas)
+);
+
+
+licencasRotas.post(
+  "/",
+  autenticarAdmin,
+  envolverAsync(criarLicenca)
+);
 
 
 // chamado pelo robô/backoffice (chave admin)
