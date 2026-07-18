@@ -63,6 +63,15 @@ api.interceptors.request.use(
 
 const cliente = {
 
+    login(login: string, senha: string) {
+
+        return api.post(
+            "/auth/login",
+            { login, senha }
+        );
+
+    },
+
 
 
     listarEmpresas(){
