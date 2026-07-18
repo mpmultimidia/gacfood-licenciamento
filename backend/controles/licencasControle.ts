@@ -1,8 +1,8 @@
 // api/controles/licencasControle
 import type { Request, Response } from 'express';
-import { supabase } from '../../supabase/conexao.js';
-import { solicitarCodigoDeAtivacao, ativarOuRenovarLicenca } from '../../licenciamento/renovacao.js';
-import { buscarLicencaAtivaDaEmpresa, licencaEstaValida } from '../../licenciamento/validacao.js';
+import { supabase } from '../../supabase/conexao.ts';
+import { solicitarCodigoDeAtivacao, ativarOuRenovarLicenca } from '../../licenciamento/renovacao.ts';
+import { buscarLicencaAtivaDaEmpresa, licencaEstaValida } from '../../licenciamento/validacao.ts';
 
 /**
  * POST /api/licencas/solicitar-codigo   (chave admin)
@@ -19,10 +19,10 @@ export async function solicitarCodigo(req: Request, res: Response): Promise<void
   const { empresa, codigoAtivacao } = await solicitarCodigoDeAtivacao(codigoEmpresa);
   res.json({
     ok: true,
-    empresa: { codigo: empresa.codigo, nome_fantasia: empresa.nome_fantasia },
+    empresa: { codigo: (empresa as any).codigo, nome_fantasia: (empresa as any).nome_fantasia },
     codigoAtivacao: {
-      codigo: codigoAtivacao.codigo,
-      expira_em: codigoAtivacao.expira_em,
+      codigo: (codigoAtivacao as any).codigo,
+      expira_em: (codigoAtivacao as any).expira_em,
     },
   });
 }
@@ -31,7 +31,9 @@ export async function solicitarCodigo(req: Request, res: Response): Promise<void
  * POST /api/licencas/ativar   (chave cliente)
  * body: { codigoAtivacao: string, hashDispositivo?: string }
  * Passo 2 do robô: o GACFOOD local chama isso com o código digitado
- * pelo cliente. Retorna os dados que devem ser gravados no SQLite local.
+ * pelo cliente. Retorna os dados que devem ser gravados no .env local —
+ * incluindo as credenciais do Supabase deste restaurante e os módulos
+ * liberados pelo plano contratado.
  */
 export async function ativarLicenca(req: Request, res: Response): Promise<void> {
   const { codigoAtivacao, hashDispositivo } = req.body as {
@@ -52,7 +54,9 @@ export async function ativarLicenca(req: Request, res: Response): Promise<void> 
       emitida_em: licenca.emitida_em,
       expira_em: licenca.expira_em,
       status: licenca.status,
+      modulos: licenca.modulos,
     },
+    credenciais: licenca.credenciais,
   });
 }
 
