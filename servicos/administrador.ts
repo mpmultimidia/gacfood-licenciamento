@@ -1,5 +1,5 @@
 // servicos/administrador.ts
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { supabase } from "../supabase/conexao.js";
 
 export interface Administrador {
