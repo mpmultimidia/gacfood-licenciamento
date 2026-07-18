@@ -4,6 +4,107 @@ import { supabase } from '../../supabase/conexao.js';
 import { solicitarCodigoDeAtivacao, ativarOuRenovarLicenca } from '../../licenciamento/renovacao.js';
 import { buscarLicencaAtivaDaEmpresa, licencaEstaValida } from '../../licenciamento/validacao.js';
 
+function gerarCodigoLicenca(): string {
+  const aleatorio = Math.random().toString(36).slice(2, 8).toUpperCase();
+  const data = Date.now().toString(36).toUpperCase();
+  return `LIC-${data}-${aleatorio}`;
+}
+
+/**
+ * GET /api/licencas   (chave admin)
+ * Lista todas as licenças já emitidas, com nome da empresa e do plano.
+ */
+export async function listarLicencas(_req: Request, res: Response): Promise<void> {
+  const { data, error } = await supabase
+    .from('licencas')
+    .select('id, empresa_id, plano_id, codigo_licenca, versao, status, emitida_em, expira_em, empresas(nome_fantasia, codigo), planos(nome)')
+    .order('emitida_em', { ascending: false });
+
+  if (error) throw error;
+
+  const resultado = (data ?? []).map((l: any) => ({
+    id: l.id,
+    empresaId: l.empresa_id,
+    planoId: l.plano_id,
+    empresa: l.empresas?.nome_fantasia ?? '-',
+    plano: l.planos?.nome ?? '-',
+    codigo_licenca: l.codigo_licenca,
+    versao: l.versao,
+    status: l.status,
+    emitida_em: l.emitida_em,
+    expira_em: l.expira_em,
+  }));
+
+  res.json(resultado);
+}
+
+/**
+ * POST /api/licencas   (chave admin)
+ * Emite uma licença nova para uma empresa já cadastrada, em um plano
+ * já cadastrado. O prazo de validade vem do plano (dias_validade_padrao),
+ * a menos que "dias_validade" seja informado explicitamente no body.
+ * Também grava um registro em historico_licencas.
+ */
+export async function criarLicenca(req: Request, res: Response): Promise<void> {
+  const { empresa_id, plano_id, dias_validade } = req.body as {
+    empresa_id?: string;
+    plano_id?: string;
+    dias_validade?: number;
+  };
+
+  if (!empresa_id || !plano_id) {
+    res.status(400).json({ ok: false, erro: 'Informe a empresa e o plano.' });
+    return;
+  }
+
+  const { data: plano, error: erroPlano } = await supabase
+    .from('planos')
+    .select('id, nome, dias_validade_padrao')
+    .eq('id', plano_id)
+    .single();
+
+  if (erroPlano || !plano) {
+    res.status(400).json({ ok: false, erro: 'Plano não encontrado.' });
+    return;
+  }
+
+  const dias = dias_validade ?? (plano as any).dias_validade_padrao ?? 30;
+
+  const agora = new Date();
+  const expiraEm = new Date(agora.getTime() + dias * 24 * 60 * 60 * 1000);
+
+  const codigoLicenca = gerarCodigoLicenca();
+
+  const { data: licenca, error: erroLicenca } = await supabase
+    .from('licencas')
+    .insert({
+      empresa_id,
+      plano_id,
+      codigo_licenca: codigoLicenca,
+      emitida_em: agora.toISOString(),
+      expira_em: expiraEm.toISOString(),
+      status: 'ATIVA',
+    } as any)
+    .select()
+    .single();
+
+  if (erroLicenca) throw erroLicenca;
+
+  await supabase
+    .from('historico_licencas')
+    .insert({
+      licenca_id: (licenca as any).id,
+      empresa_id,
+      codigo_licenca: codigoLicenca,
+      emitida_em: agora.toISOString(),
+      expira_em: expiraEm.toISOString(),
+      motivo: 'EMISSAO',
+      emitida_por: (req as any).usuario?.login ?? null,
+    } as any);
+
+  res.json({ ok: true, licenca });
+}
+
 /**
  * POST /api/licencas/solicitar-codigo   (chave admin)
  * body: { codigoEmpresa: string }
@@ -97,7 +198,8 @@ export async function listarVencendo(_req: Request, res: Response): Promise<void
 /**
  * GET /api/licencas/historico   (chave admin)
  * query: ?limite=50 (opcional, padrão 50)
- * Lista o histórico de emissões/renovações mais recentes, com nome da empresa.
+ * Lista o histórico de emissões/renovações mais recentes, com nome da empresa,
+ * já no formato { acao, descricao, usuario, data } que a tela de Histórico usa.
  */
 export async function listarHistorico(req: Request, res: Response): Promise<void> {
   const limite = Number(req.query.limite) || 50;
@@ -105,11 +207,19 @@ export async function listarHistorico(req: Request, res: Response): Promise<void
   const { data, error } = await supabase
     .from('historico_licencas')
     .select('*, empresas(codigo, nome_fantasia)')
-    .order('emitida_em', { ascending: false })
+    .order('criado_em', { ascending: false })
     .limit(limite);
   if (error) throw error;
 
-  res.json({ ok: true, historico: data ?? [] });
+  const resultado = (data ?? []).map((h: any) => ({
+    id: h.id,
+    acao: h.motivo === 'EMISSAO' ? 'Licença emitida' : (h.motivo ?? 'Evento de licença'),
+    descricao: `${h.empresas?.nome_fantasia ?? 'Empresa'} — código ${h.codigo_licenca}, válida até ${new Date(h.expira_em).toLocaleDateString('pt-BR')}`,
+    usuario: h.emitida_por ?? 'Sistema',
+    data: new Date(h.criado_em).toLocaleString('pt-BR'),
+  }));
+
+  res.json(resultado);
 }
 
 /**
