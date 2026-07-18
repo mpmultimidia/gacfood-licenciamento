@@ -27,6 +27,7 @@ export async function listarLicencas(_req: Request, res: Response): Promise<void
     empresaId: l.empresa_id,
     planoId: l.plano_id,
     empresa: l.empresas?.nome_fantasia ?? '-',
+    empresaCodigo: l.empresas?.codigo ?? null,
     plano: l.planos?.nome ?? '-',
     codigo_licenca: l.codigo_licenca,
     versao: l.versao,
