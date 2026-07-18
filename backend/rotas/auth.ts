@@ -1,41 +1,44 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
-import { envolverAsync } from "../middleware/tratarErros.js";
-import { autenticarUsuario } from "../../servicos/usuario.js";
-import { ambiente } from "../../config/ambiente.js";
+import { envolverAsync } from "../middleware/tratarErros.ts";
+import { autenticarAdministrador } from "../../servicos/administrador.ts";
+import { ambiente } from "../../config/ambiente.ts";
 
 const router = Router();
 
 // Rota pública (não passa por autenticarAdmin) — é aqui que se consegue o
 // token pela primeira vez, então não dá pra exigir token pra acessar ela.
+//
+// Login por usuário e senha (NUNCA e-mail) — mesmo padrão usado em todo o
+// resto do sistema GACFOOD.
 router.post(
   "/login",
   envolverAsync(async (req, res) => {
-    const { email, senha } = req.body;
+    const { login, senha } = req.body;
 
-    if (!email || !senha) {
+    if (!login || !senha) {
       res.status(400).json({
         ok: false,
-        erro: "Informe e-mail e senha.",
+        erro: "Informe login e senha.",
       });
       return;
     }
 
-    const usuario = await autenticarUsuario(email, senha);
+    const administrador = await autenticarAdministrador(login, senha);
 
-    if (!usuario) {
+    if (!administrador) {
       res.status(401).json({
         ok: false,
-        erro: "E-mail ou senha inválidos.",
+        erro: "Login ou senha inválidos.",
       });
       return;
     }
 
     const token = jwt.sign(
       {
-        id: usuario.id,
-        email: usuario.email,
-        perfil: usuario.perfil,
+        id: administrador.id,
+        login: administrador.login,
+        perfil: administrador.perfil,
       },
       ambiente.apiKeyAdmin,
       { expiresIn: "8h" }
@@ -44,7 +47,7 @@ router.post(
     res.json({
       ok: true,
       token,
-      usuario,
+      usuario: administrador,
     });
   })
 );
