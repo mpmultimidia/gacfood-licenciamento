@@ -245,3 +245,50 @@ export async function statusLicenca(req: Request, res: Response): Promise<void> 
       : null,
   });
 }
+
+/**
+ * PUT /api/licencas/:id   (chave admin)
+ * Altera plano, validade e/ou status de uma licença já emitida.
+ */
+export async function atualizarLicenca(req: Request, res: Response): Promise<void> {
+  const { id } = req.params;
+  const { status, plano_id, expira_em } = req.body as {
+    status?: string;
+    plano_id?: string;
+    expira_em?: string;
+  };
+
+  const campos: Record<string, any> = {};
+  if (status !== undefined) campos.status = status;
+  if (plano_id !== undefined) campos.plano_id = plano_id;
+  if (expira_em !== undefined) campos.expira_em = expira_em;
+
+  const { data, error } = await supabase
+    .from('licencas')
+    .update(campos as any)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  res.json({ ok: true, licenca: data });
+}
+
+/**
+ * DELETE /api/licencas/:id   (chave admin)
+ * Não apaga a linha do banco — marca a licença como CANCELADA
+ * (o registro em historico_licencas continua intacto).
+ */
+export async function excluirLicenca(req: Request, res: Response): Promise<void> {
+  const { id } = req.params;
+
+  const { error } = await supabase
+    .from('licencas')
+    .update({ status: 'CANCELADA' } as any)
+    .eq('id', id);
+
+  if (error) throw error;
+
+  res.json({ ok: true });
+}
