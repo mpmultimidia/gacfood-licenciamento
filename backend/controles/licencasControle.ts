@@ -1,8 +1,8 @@
 // api/controles/licencasControle
 import type { Request, Response } from 'express';
-import { supabase } from '../../supabase/conexao.js';
-import { solicitarCodigoDeAtivacao, ativarOuRenovarLicenca } from '../../licenciamento/renovacao.js';
-import { buscarLicencaAtivaDaEmpresa, licencaEstaValida } from '../../licenciamento/validacao.js';
+import { supabase } from '../../supabase/conexao.ts';
+import { solicitarCodigoDeAtivacao, ativarOuRenovarLicenca } from '../../licenciamento/renovacao.ts';
+import { buscarLicencaAtivaDaEmpresa, licencaEstaValida } from '../../licenciamento/validacao.ts';
 
 /**
  * POST /api/licencas/solicitar-codigo   (chave admin)
