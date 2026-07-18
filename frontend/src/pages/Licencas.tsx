@@ -11,7 +11,10 @@ import {
 import Card from "../components/Card";
 
 import api, {
-    LicencaDTO
+    LicencaDTO,
+    NovaLicencaDTO,
+    EmpresaDTO,
+    PlanoDTO
 } from "../api/cliente";
 
 
@@ -23,6 +26,21 @@ export default function Licencas() {
     const [busca,setBusca] = useState("");
 
     const [carregando,setCarregando] = useState(false);
+
+    const [modalAberto,setModalAberto] = useState(false);
+
+    const [salvando,setSalvando] = useState(false);
+
+    const [erroForm,setErroForm] = useState("");
+
+    const [empresas,setEmpresas] = useState<EmpresaDTO[]>([]);
+
+    const [planos,setPlanos] = useState<PlanoDTO[]>([]);
+
+    const [form,setForm] = useState<NovaLicencaDTO>({
+        empresa_id: "",
+        plano_id: ""
+    });
 
 
 
@@ -67,6 +85,91 @@ export default function Licencas() {
 
 
 
+    async function abrirModal(){
+
+        setForm({ empresa_id: "", plano_id: "" });
+        setErroForm("");
+        setModalAberto(true);
+
+        try{
+
+            const [respEmpresas, respPlanos] = await Promise.all([
+                api.listarEmpresas(),
+                api.listarPlanos()
+            ]);
+
+            setEmpresas(respEmpresas.data.empresas ?? []);
+            setPlanos(respPlanos.data ?? []);
+
+        }catch(erro){
+
+            console.error(
+                "Erro ao carregar empresas/planos",
+                erro
+            );
+
+        }
+
+    }
+
+
+
+    function fecharModal(){
+
+        if(salvando) return;
+
+        setModalAberto(false);
+
+    }
+
+
+
+    async function salvarLicenca(){
+
+        if(!form.empresa_id || !form.plano_id){
+
+            setErroForm(
+                "Selecione a empresa e o plano."
+            );
+
+            return;
+
+        }
+
+        try{
+
+            setSalvando(true);
+            setErroForm("");
+
+            await api.criarLicenca(form);
+
+            setModalAberto(false);
+
+            await carregarLicencas();
+
+        }catch(erro: any){
+
+            console.error(
+                "Erro ao emitir licença",
+                erro
+            );
+
+            setErroForm(
+                erro?.response?.data?.erro
+                ??
+                "Não foi possível emitir a licença. Tente novamente."
+            );
+
+        }finally{
+
+            setSalvando(false);
+
+        }
+
+    }
+
+
+
     const licencasFiltradas =
         licencas.filter((licenca)=>{
 
@@ -77,13 +180,13 @@ export default function Licencas() {
 
             return (
 
-                String(licenca.empresaId ?? "")
+                String(licenca.empresa ?? "")
                     .toLowerCase()
                     .includes(termo)
 
                 ||
 
-                String(licenca.planoId ?? "")
+                String(licenca.plano ?? "")
                     .toLowerCase()
                     .includes(termo)
 
@@ -143,6 +246,8 @@ export default function Licencas() {
 
 
                 <button
+
+                    onClick={abrirModal}
 
                     style={{
                         display:"flex",
@@ -327,7 +432,7 @@ export default function Licencas() {
                                         />
 
 
-                                        {licenca.empresaId ?? "-"}
+                                        {licenca.empresa ?? "-"}
 
 
                                     </div>
@@ -338,7 +443,7 @@ export default function Licencas() {
 
                                 <td>
 
-                                    {licenca.planoId ?? "-"}
+                                    {licenca.plano ?? "-"}
 
                                 </td>
 
@@ -348,8 +453,14 @@ export default function Licencas() {
                                     <span
 
                                         style={{
-                                            background:"#dcfce7",
-                                            color:"#166534",
+                                            background:
+                                                licenca.status === "ATIVA"
+                                                    ? "#dcfce7"
+                                                    : "#fef2f2",
+                                            color:
+                                                licenca.status === "ATIVA"
+                                                    ? "#166534"
+                                                    : "#dc2626",
                                             padding:"5px 10px",
                                             borderRadius:20,
                                             fontSize:12
@@ -357,7 +468,7 @@ export default function Licencas() {
 
                                     >
 
-                                        Ativa
+                                        {licenca.status ?? "Ativa"}
 
                                     </span>
 
@@ -440,6 +551,268 @@ export default function Licencas() {
 
 
             </Card>
+
+
+            {
+
+            modalAberto &&
+
+            (
+
+                <div
+
+                    onClick={fecharModal}
+
+                    style={{
+                        position:"fixed",
+                        inset:0,
+                        background:"rgba(0,0,0,.45)",
+                        display:"flex",
+                        alignItems:"center",
+                        justifyContent:"center",
+                        zIndex:50
+                    }}
+
+                >
+
+                    <div
+
+                        onClick={(e)=>e.stopPropagation()}
+
+                        style={{
+                            background:"#ffffff",
+                            borderRadius:14,
+                            padding:26,
+                            width:440,
+                            maxWidth:"92vw",
+                            maxHeight:"88vh",
+                            overflowY:"auto"
+                        }}
+
+                    >
+
+                        <h3
+
+                            style={{
+                                fontSize:20,
+                                fontWeight:700,
+                                marginBottom:18
+                            }}
+
+                        >
+
+                            Nova licença
+
+                        </h3>
+
+
+                        {
+
+                        erroForm &&
+
+                        (
+
+                            <div
+
+                                style={{
+                                    background:"#fef2f2",
+                                    color:"#dc2626",
+                                    padding:"10px 14px",
+                                    borderRadius:8,
+                                    marginBottom:16,
+                                    fontSize:14
+                                }}
+
+                            >
+
+                                {erroForm}
+
+                            </div>
+
+                        )
+
+                        }
+
+
+                        <div style={{display:"flex", flexDirection:"column", gap:12}}>
+
+                            <label>
+
+                                Empresa *
+
+                                <select
+
+                                    value={form.empresa_id}
+
+                                    onChange={(e)=>
+                                        setForm({
+                                            ...form,
+                                            empresa_id: e.target.value
+                                        })
+                                    }
+
+                                >
+
+                                    <option value="">Selecione a empresa</option>
+
+                                    {
+
+                                    empresas.map((empresa)=>(
+
+                                        <option
+
+                                            key={empresa.id}
+                                            value={empresa.id}
+
+                                        >
+
+                                            {empresa.nome_fantasia}
+
+                                        </option>
+
+                                    ))
+
+                                    }
+
+                                </select>
+
+                            </label>
+
+
+                            <label>
+
+                                Plano *
+
+                                <select
+
+                                    value={form.plano_id}
+
+                                    onChange={(e)=>
+                                        setForm({
+                                            ...form,
+                                            plano_id: e.target.value
+                                        })
+                                    }
+
+                                >
+
+                                    <option value="">Selecione o plano</option>
+
+                                    {
+
+                                    planos.map((plano)=>(
+
+                                        <option
+
+                                            key={plano.id}
+                                            value={plano.id}
+
+                                        >
+
+                                            {plano.nome}
+
+                                        </option>
+
+                                    ))
+
+                                    }
+
+                                </select>
+
+                            </label>
+
+
+                            <label>
+
+                                Validade (dias) — opcional, usa o padrão do plano se vazio
+
+                                <input
+
+                                    type="number"
+
+                                    min={1}
+
+                                    value={form.dias_validade ?? ""}
+
+                                    onChange={(e)=>
+                                        setForm({
+                                            ...form,
+                                            dias_validade:
+                                                e.target.value
+                                                    ? Number(e.target.value)
+                                                    : undefined
+                                        })
+                                    }
+
+                                />
+
+                            </label>
+
+                        </div>
+
+
+                        <div
+
+                            style={{
+                                display:"flex",
+                                justifyContent:"flex-end",
+                                gap:10,
+                                marginTop:22
+                            }}
+
+                        >
+
+                            <button
+
+                                onClick={fecharModal}
+
+                                disabled={salvando}
+
+                                style={{
+                                    border:"1px solid #e5e7eb",
+                                    background:"#ffffff",
+                                    padding:"10px 18px",
+                                    borderRadius:8,
+                                    fontWeight:600
+                                }}
+
+                            >
+
+                                Cancelar
+
+                            </button>
+
+
+                            <button
+
+                                onClick={salvarLicenca}
+
+                                disabled={salvando}
+
+                                style={{
+                                    border:"none",
+                                    background:"#2563eb",
+                                    color:"#ffffff",
+                                    padding:"10px 18px",
+                                    borderRadius:8,
+                                    fontWeight:600
+                                }}
+
+                            >
+
+                                {salvando ? "Emitindo..." : "Emitir licença"}
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            )
+
+            }
 
 
         </div>
