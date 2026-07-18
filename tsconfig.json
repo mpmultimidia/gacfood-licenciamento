@@ -19,6 +19,7 @@
   "include": [
     "serve.ts",
     "api/**/*.ts",
+    "backend/**/*.ts",
     "config/**/*.ts",
     "licenciamento/**/*.ts",
     "repositorios/**/*.ts",
