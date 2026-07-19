@@ -4,6 +4,7 @@ import { supabase } from '../../supabase/conexao.js';
 import { solicitarCodigoDeAtivacao, ativarOuRenovarLicenca } from '../../licenciamento/renovacao.js';
 import { buscarLicencaAtivaDaEmpresa, licencaEstaValida } from '../../licenciamento/validacao.js';
 import { registrarEventoSistema } from '../../servicos/logsSistema.js';
+import { listarFuncionalidadesDoPlano } from '../../servicos/funcionalidadesPlano.js';
 
 function gerarCodigoLicenca(): string {
   const aleatorio = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -252,6 +253,11 @@ export async function statusLicenca(req: Request, res: Response): Promise<void> 
   const { empresaId } = req.params as { empresaId: string };
 
   const licenca = await buscarLicencaAtivaDaEmpresa(empresaId);
+
+  const modulos = licenca
+    ? await listarFuncionalidadesDoPlano((licenca as any).plano_id)
+    : [];
+
   res.json({
     ok: true,
     valida: licencaEstaValida(licenca),
@@ -260,6 +266,7 @@ export async function statusLicenca(req: Request, res: Response): Promise<void> 
           codigo_licenca: licenca.codigo_licenca,
           expira_em: licenca.expira_em,
           status: licenca.status,
+          modulos,
         }
       : null,
   });
