@@ -60,6 +60,13 @@ export interface PlanoDTO {
     ativo: boolean;
 }
 
+export interface NovoPlanoDTO {
+    nome: string;
+    descricao?: string;
+    valor?: number;
+    ativo?: boolean;
+}
+
 const api = axios.create({
 
     baseURL:
@@ -155,6 +162,27 @@ const cliente = {
 
 
 
+    atualizarEmpresa(id: string, dados: Partial<NovaEmpresaDTO> & { status?: string }){
+
+        return api.put(
+            `/empresas/${id}`,
+            dados
+        );
+
+    },
+
+
+
+    excluirEmpresa(id: string){
+
+        return api.delete(
+            `/empresas/${id}`
+        );
+
+    },
+
+
+
     listarUsuarios(){
 
         return api.get(
@@ -175,10 +203,63 @@ const cliente = {
 
 
 
+    criarPlano(dados: NovoPlanoDTO){
+
+        return api.post(
+            "/planos",
+            dados
+        );
+
+    },
+
+
+
+    atualizarPlano(id: string, dados: Partial<NovoPlanoDTO>){
+
+        return api.put(
+            `/planos/${id}`,
+            dados
+        );
+
+    },
+
+
+
+    excluirPlano(id: string){
+
+        return api.delete(
+            `/planos/${id}`
+        );
+
+    },
+
+
+
     listarLicencas(){
 
         return api.get(
             "/licencas"
+        );
+
+    },
+
+
+
+    atualizarLicenca(id: string, dados: { status?: string; plano_id?: string; expira_em?: string }){
+
+        return api.put(
+            `/licencas/${id}`,
+            dados
+        );
+
+    },
+
+
+
+    excluirLicenca(id: string){
+
+        return api.delete(
+            `/licencas/${id}`
         );
 
     },
@@ -211,6 +292,38 @@ const cliente = {
 
         return api.get(
             "/modulos"
+        );
+
+    },
+
+
+
+    criarModulo(dados: {nome:string; descricao?:string; status?:string}){
+
+        return api.post(
+            "/modulos",
+            dados
+        );
+
+    },
+
+
+
+    atualizarModulo(id: string, dados: {nome?:string; descricao?:string; status?:string}){
+
+        return api.put(
+            `/modulos/${id}`,
+            dados
+        );
+
+    },
+
+
+
+    excluirModulo(id: string){
+
+        return api.delete(
+            `/modulos/${id}`
         );
 
     },
