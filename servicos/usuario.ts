@@ -4,7 +4,7 @@ import { supabase } from "../supabase/conexao.js";
 export async function listarUsuarios() {
   const { data, error } = await supabase
     .from("usuarios")
-    .select("*")
+    .select("id, nome, login, perfil, ativo, criado_em")
     .order("criado_em", {
       ascending: false,
     });
@@ -21,7 +21,7 @@ export async function buscarUsuario(
 ) {
   const { data, error } = await supabase
     .from("usuarios")
-    .select("*")
+    .select("id, nome, login, perfil, ativo, criado_em")
     .eq("id", id)
     .single();
 
@@ -35,60 +35,114 @@ export async function buscarUsuario(
 export async function criarUsuario(
   dados: any
 ) {
-  // NOVO: nunca grava a senha em texto puro — sempre em hash (bcrypt).
-  // Antes, `dados` ia direto pro insert com a senha do jeito que chegou.
-  const dadosParaGravar = { ...dados };
+  const { nome, login, senha, perfil } = dados as {
+    nome?: string;
+    login?: string;
+    senha?: string;
+    perfil?: string;
+  };
 
-  if (dadosParaGravar.senha) {
-    dadosParaGravar.senha = await bcrypt.hash(
-      dadosParaGravar.senha,
-      10
-    );
+  if (!nome || !login || !senha) {
+    const erro: any = new Error("Informe nome, login e senha.");
+    erro.status = 400;
+    throw erro;
   }
+
+  const senhaHash = await bcrypt.hash(senha, 10);
 
   const { data, error } = await supabase
     .from("usuarios")
-    .insert(dadosParaGravar)
-    .select()
+    .insert({
+      nome,
+      login,
+      senha: senhaHash,
+      perfil: perfil || "operador",
+    } as any)
+    .select("id, nome, login, perfil, ativo, criado_em")
     .single();
 
   if (error) {
     throw error;
   }
 
-  // Nunca devolve o hash da senha pro front-end.
-  if (data) {
-    delete (data as any).senha;
+  return data;
+}
+
+export async function atualizarUsuario(
+  id: string,
+  dados: any
+) {
+  const { nome, login, senha, perfil, ativo } = dados as {
+    nome?: string;
+    login?: string;
+    senha?: string;
+    perfil?: string;
+    ativo?: boolean;
+  };
+
+  const campos: Record<string, any> = {};
+  if (nome !== undefined) campos.nome = nome;
+  if (login !== undefined) campos.login = login;
+  if (perfil !== undefined) campos.perfil = perfil;
+  if (ativo !== undefined) campos.ativo = ativo;
+
+  // Só troca a senha se uma nova senha foi enviada — nunca sobrescreve
+  // com vazio/undefined.
+  if (senha) {
+    campos.senha = await bcrypt.hash(senha, 10);
+  }
+
+  const { data, error } = await supabase
+    .from("usuarios")
+    .update(campos)
+    .eq("id", id)
+    .select("id, nome, login, perfil, ativo, criado_em")
+    .single();
+
+  if (error) {
+    throw error;
   }
 
   return data;
 }
 
-// NOVO: confere e-mail + senha para o login do painel. Devolve os dados do
-// usuário (sem a senha) se estiver correto, ou null se não bater.
+export async function excluirUsuario(
+  id: string
+) {
+  // Não apaga a linha — só desativa o acesso.
+  const { error } = await supabase
+    .from("usuarios")
+    .update({ ativo: false } as any)
+    .eq("id", id);
+
+  if (error) {
+    throw error;
+  }
+
+  return { ok: true };
+}
+
+// Confere login + senha para o login do painel (usuários secundários,
+// não o MASTER). Devolve os dados do usuário (sem a senha) se estiver
+// tudo certo e o usuário estiver ativo, ou null se não bater.
 export async function autenticarUsuario(
-  email: string,
+  login: string,
   senha: string
 ) {
   const { data, error } = await supabase
     .from("usuarios")
     .select("*")
-    .eq("email", email)
+    .eq("login", login)
+    .eq("ativo", true)
     .single();
 
   if (error || !data) {
     return null;
   }
 
-  if (!data.senha) {
-    // Usuário sem senha cadastrada (ex: criado antes desta correção) —
-    // não dá pra autenticar com segurança.
-    return null;
-  }
-
   const senhaOk = await bcrypt.compare(
     senha,
-    data.senha
+    (data as any).senha
   );
 
   if (!senhaOk) {
@@ -96,7 +150,7 @@ export async function autenticarUsuario(
   }
 
   const usuarioSemSenha = { ...data };
-  delete usuarioSemSenha.senha;
+  delete (usuarioSemSenha as any).senha;
 
   return usuarioSemSenha;
 }
