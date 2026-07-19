@@ -60,11 +60,21 @@ export interface PlanoDTO {
     ativo: boolean;
 }
 
+export interface ModuloDTO {
+    id: string;
+    nome: string;
+    descricao: string | null;
+    status?: string;
+}
+
 export interface NovoPlanoDTO {
     nome: string;
     descricao?: string;
     valor?: number;
     ativo?: boolean;
+    limite_dispositivos_padrao?: number;
+    dias_validade_padrao?: number;
+    funcionalidades?: string[];
 }
 
 export interface UsuarioDTO {
@@ -256,6 +266,16 @@ const cliente = {
         return api.post(
             "/planos",
             dados
+        );
+
+    },
+
+
+
+    buscarPlano(id: string){
+
+        return api.get(
+            `/planos/${id}`
         );
 
     },
