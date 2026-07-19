@@ -17,6 +17,8 @@ interface Modulo {
 
     id?: string;
 
+    codigo?: string;
+
     nome: string;
 
     descricao?: string;
@@ -395,6 +397,13 @@ export default function Modulos() {
 
                             <th>
 
+                                Código
+
+                            </th>
+
+
+                            <th>
+
                                 Descrição
 
                             </th>
@@ -434,7 +443,7 @@ export default function Modulos() {
 
                             <td
 
-                                colSpan={4}
+                                colSpan={5}
 
                                 style={{
                                     textAlign:"center",
@@ -486,6 +495,21 @@ export default function Modulos() {
 
                                 </div>
 
+
+                            </td>
+
+
+                            <td
+
+                                style={{
+                                    fontFamily:"monospace",
+                                    fontSize:12,
+                                    color:"#6b7280"
+                                }}
+
+                            >
+
+                                {modulo.codigo ?? "-"}
 
                             </td>
 
@@ -703,6 +727,30 @@ export default function Modulos() {
                                 />
 
                             </label>
+
+
+                            {
+
+                            moduloEditando?.codigo &&
+
+                            (
+
+                                <div
+
+                                    style={{
+                                        fontSize:12,
+                                        color:"#9ca3af"
+                                    }}
+
+                                >
+
+                                    Código usado no bloqueio: <span style={{fontFamily:"monospace"}}>{moduloEditando.codigo}</span> (não muda ao renomear)
+
+                                </div>
+
+                            )
+
+                            }
 
 
                             <label>

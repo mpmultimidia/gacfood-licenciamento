@@ -8,7 +8,8 @@ import {
     AlertTriangle,
     Server,
     Database,
-    Activity
+    Activity,
+    DollarSign
 } from "lucide-react";
 
 import Card from "../components/Card";
@@ -20,6 +21,14 @@ interface VencendoItem {
     empresa: { codigo: string; nome_fantasia: string } | null;
 }
 
+interface ReceitaPorPlano {
+    plano_id: string;
+    plano_nome: string;
+    valor_unitario: number;
+    quantidade_licencas: number;
+    total: number;
+}
+
 export default function Dashboard() {
 
     const [contadores,setContadores] = useState({
@@ -28,6 +37,10 @@ export default function Dashboard() {
         usuarios: 0,
         planos: 0
     });
+
+    const [receitaPorPlano,setReceitaPorPlano] = useState<ReceitaPorPlano[]>([]);
+
+    const [receitaTotal,setReceitaTotal] = useState(0);
 
     const [vencendo,setVencendo] = useState<VencendoItem[]>([]);
 
@@ -59,6 +72,14 @@ export default function Dashboard() {
                     }
                 );
 
+                setReceitaPorPlano(
+                    respostaDashboard.data?.dados?.receitaPorPlano ?? []
+                );
+
+                setReceitaTotal(
+                    respostaDashboard.data?.dados?.receitaTotal ?? 0
+                );
+
                 setVencendo(
                     respostaVencendo.data?.licencas ?? []
                 );
@@ -85,6 +106,15 @@ export default function Dashboard() {
 
 
     const metricas = [
+
+        {
+            titulo: "Receita mensal (licenças ativas)",
+            valor:
+                "R$ " +
+                receitaTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+            icone: DollarSign,
+            cor: "#16a34a"
+        },
 
         {
             titulo: "Empresas cadastradas",
@@ -378,6 +408,122 @@ export default function Dashboard() {
 
                 </Card>
 
+
+            </div>
+
+
+            <div style={{ marginTop:25 }}>
+
+                <Card
+
+                    titulo="Receita por plano (licenças ativas)"
+
+                >
+
+                    {
+
+                    receitaPorPlano.length === 0
+
+                    ?
+
+                    (
+
+                        <div
+                            style={{
+                                padding:15,
+                                color:"#6b7280",
+                                fontSize:14
+                            }}
+                        >
+
+                            Nenhuma licença ativa ainda.
+
+                        </div>
+
+                    )
+
+                    :
+
+                    (
+
+                        <table style={{ width:"100%", borderCollapse:"collapse" }}>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th style={{ textAlign:"left", padding:"10px 8px", fontSize:13, color:"#6b7280", borderBottom:"1px solid #e5e7eb" }}>
+                                        Plano
+                                    </th>
+
+                                    <th style={{ textAlign:"right", padding:"10px 8px", fontSize:13, color:"#6b7280", borderBottom:"1px solid #e5e7eb" }}>
+                                        Valor unitário
+                                    </th>
+
+                                    <th style={{ textAlign:"right", padding:"10px 8px", fontSize:13, color:"#6b7280", borderBottom:"1px solid #e5e7eb" }}>
+                                        Licenças ativas
+                                    </th>
+
+                                    <th style={{ textAlign:"right", padding:"10px 8px", fontSize:13, color:"#6b7280", borderBottom:"1px solid #e5e7eb" }}>
+                                        Total
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                {
+
+                                receitaPorPlano.map((linha)=>(
+
+                                    <tr key={linha.plano_id}>
+
+                                        <td style={{ padding:"10px 8px", borderBottom:"1px solid #f3f4f6", fontWeight:600 }}>
+                                            {linha.plano_nome}
+                                        </td>
+
+                                        <td style={{ padding:"10px 8px", borderBottom:"1px solid #f3f4f6", textAlign:"right", color:"#6b7280" }}>
+                                            R$ {linha.valor_unitario.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        </td>
+
+                                        <td style={{ padding:"10px 8px", borderBottom:"1px solid #f3f4f6", textAlign:"right" }}>
+                                            {linha.quantidade_licencas}
+                                        </td>
+
+                                        <td style={{ padding:"10px 8px", borderBottom:"1px solid #f3f4f6", textAlign:"right", fontWeight:700, color:"#16a34a" }}>
+                                            R$ {linha.total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        </td>
+
+                                    </tr>
+
+                                ))
+
+                                }
+
+
+                                <tr>
+
+                                    <td colSpan={3} style={{ padding:"12px 8px", fontWeight:700 }}>
+                                        Total geral
+                                    </td>
+
+                                    <td style={{ padding:"12px 8px", textAlign:"right", fontWeight:700, color:"#16a34a", fontSize:16 }}>
+                                        R$ {receitaTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    )
+
+                    }
+
+                </Card>
 
             </div>
 
