@@ -293,6 +293,26 @@ const cliente = {
 
 
 
+    dashboard(){
+
+        return api.get(
+            "/dashboard"
+        );
+
+    },
+
+
+
+    licencasVencendo(){
+
+        return api.get(
+            "/licencas/vencendo"
+        );
+
+    },
+
+
+
     atualizarLicenca(id: string, dados: { status?: string; plano_id?: string; expira_em?: string }){
 
         return api.put(
