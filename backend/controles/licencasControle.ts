@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import { supabase } from '../../supabase/conexao.js';
 import { solicitarCodigoDeAtivacao, ativarOuRenovarLicenca } from '../../licenciamento/renovacao.js';
 import { buscarLicencaAtivaDaEmpresa, licencaEstaValida } from '../../licenciamento/validacao.js';
+import { registrarEventoSistema } from '../../servicos/logsSistema.js';
 
 function gerarCodigoLicenca(): string {
   const aleatorio = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -102,6 +103,12 @@ export async function criarLicenca(req: Request, res: Response): Promise<void> {
       motivo: 'EMISSAO',
       emitida_por: (req as any).usuario?.login ?? null,
     } as any);
+
+  await registrarEventoSistema(
+    `Licença emitida (${codigoLicenca}) para empresa ${empresa_id}.`,
+    'INFO',
+    (req as any).usuario?.login
+  );
 
   res.json({ ok: true, licenca });
 }
@@ -289,6 +296,12 @@ export async function excluirLicenca(req: Request, res: Response): Promise<void>
     .eq('id', id);
 
   if (error) throw error;
+
+  await registrarEventoSistema(
+    `Licença cancelada (id ${id}).`,
+    'AVISO',
+    (req as any).usuario?.login
+  );
 
   res.json({ ok: true });
 }

@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { supabase } from "../../supabase/conexao.js";
 import { buscarEmpresaPorCodigo } from "../../licenciamento/validacao.js";
+import { registrarEventoSistema } from "../../servicos/logsSistema.js";
 
 export async function consultarEmpresa(
   req: Request,
@@ -149,6 +150,12 @@ export async function criarEmpresa(
   if (error) {
     throw error;
   }
+
+  await registrarEventoSistema(
+    `Empresa cadastrada: ${nome_fantasia}.`,
+    "INFO",
+    (req as any).usuario?.login
+  );
 
   res.json({
     ok: true,
