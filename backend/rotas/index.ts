@@ -14,6 +14,7 @@ import planosModulosRota from "./planosModulos.js";
 import empresasUsuariosRota from "./empresasUsuarios.js";
 import usuariosPermissoesRota from "./usuariosPermissoes.js";
 import validacaoRota from "./validacao.js";
+import ativacaoRota from "./ativacao.js";
 import renovacaoRota from "./renovacao.js";
 import dashboardRota from "./dashboard.js";
 import saudeRota from "./saude.js";
@@ -36,6 +37,10 @@ rotas.use("/saude", saudeRota);
 // humano logado no painel) — por isso usa autenticarCliente (checa o
 // header x-api-key contra API_KEY_CLIENTE), não o JWT de admin.
 rotas.use("/validacao", autenticarCliente, validacaoRota);
+
+// /ativacao: mesma lógica de /validacao — chamado pelo servidor do
+// restaurante sozinho (ativarLicencaSeNecessario), com a chave de cliente.
+rotas.use("/ativacao", autenticarCliente, ativacaoRota);
 
 // /licencas: fica ANTES do bloqueio geral de admin de propósito — o
 // próprio arquivo licencas.ts" já define, rota por rota, quem precisa de
