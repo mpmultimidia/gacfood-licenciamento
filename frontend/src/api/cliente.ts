@@ -313,10 +313,11 @@ const cliente = {
 
 
 
-    dashboard(){
+    dashboard(periodo?: {inicio?:string; fim?:string}){
 
         return api.get(
-            "/dashboard"
+            "/dashboard",
+            { params: periodo }
         );
 
     },
