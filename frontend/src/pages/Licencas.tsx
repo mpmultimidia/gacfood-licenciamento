@@ -294,6 +294,131 @@ export default function Licencas() {
 
 
 
+    const [licencaEditando,setLicencaEditando] = useState<LicencaDTO | null>(null);
+
+    const [formEdicao,setFormEdicao] = useState<{status:string; plano_id:string}>({
+        status: "ATIVA",
+        plano_id: ""
+    });
+
+    const [salvandoEdicao,setSalvandoEdicao] = useState(false);
+
+    const [erroEdicao,setErroEdicao] = useState("");
+
+    const [excluindoLicenca,setExcluindoLicenca] = useState<string | null>(null);
+
+
+
+    async function abrirEdicaoLicenca(licenca: LicencaDTO){
+
+        setLicencaEditando(licenca);
+
+        setFormEdicao({
+            status: licenca.status,
+            plano_id: licenca.planoId
+        });
+
+        setErroEdicao("");
+
+        if(planos.length === 0){
+
+            try{
+
+                const respostaPlanos = await api.listarPlanos();
+                setPlanos(respostaPlanos.data ?? []);
+
+            }catch(erro){
+
+                console.error("Erro ao carregar planos", erro);
+
+            }
+
+        }
+
+    }
+
+
+
+    function fecharEdicaoLicenca(){
+
+        if(salvandoEdicao) return;
+
+        setLicencaEditando(null);
+
+    }
+
+
+
+    async function salvarEdicaoLicenca(){
+
+        if(!licencaEditando) return;
+
+        try{
+
+            setSalvandoEdicao(true);
+            setErroEdicao("");
+
+            await api.atualizarLicenca(
+                licencaEditando.id,
+                formEdicao
+            );
+
+            setLicencaEditando(null);
+
+            await carregarLicencas();
+
+        }catch(erro: any){
+
+            console.error("Erro ao atualizar licença", erro);
+
+            setErroEdicao(
+                erro?.response?.data?.erro
+                ??
+                "Não foi possível salvar as alterações."
+            );
+
+        }finally{
+
+            setSalvandoEdicao(false);
+
+        }
+
+    }
+
+
+
+    async function excluirLicencaAcao(licenca: LicencaDTO){
+
+        const confirmou = window.confirm(
+            `Cancelar a licença de "${licenca.empresa}"? Isso não apaga o histórico, só marca a licença como CANCELADA.`
+        );
+
+        if(!confirmou) return;
+
+        try{
+
+            setExcluindoLicenca(licenca.id);
+
+            await api.excluirLicenca(licenca.id);
+
+            await carregarLicencas();
+
+        }catch(erro){
+
+            console.error("Erro ao cancelar licença", erro);
+
+            alert("Não foi possível cancelar a licença.");
+
+        }finally{
+
+            setExcluindoLicenca(null);
+
+        }
+
+    }
+
+
+
     function fecharCodigoLinha(){
 
         if(gerandoCodigoLinha) return;
@@ -713,6 +838,8 @@ export default function Licencas() {
 
                                         <button
 
+                                            onClick={()=> abrirEdicaoLicenca(licenca)}
+
                                             style={{
                                                 border:"none",
                                                 background:"#eff6ff",
@@ -732,6 +859,10 @@ export default function Licencas() {
 
 
                                         <button
+
+                                            onClick={()=> excluirLicencaAcao(licenca)}
+
+                                            disabled={excluindoLicenca === licenca.id}
 
                                             style={{
                                                 border:"none",
@@ -1585,6 +1716,235 @@ export default function Licencas() {
                             >
 
                                 Fechar
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            )
+
+            }
+
+
+            {
+
+            licencaEditando &&
+
+            (
+
+                <div
+
+                    onClick={fecharEdicaoLicenca}
+
+                    style={{
+                        position:"fixed",
+                        inset:0,
+                        background:"rgba(0,0,0,.45)",
+                        display:"flex",
+                        alignItems:"center",
+                        justifyContent:"center",
+                        zIndex:50
+                    }}
+
+                >
+
+                    <div
+
+                        onClick={(e)=>e.stopPropagation()}
+
+                        style={{
+                            background:"#ffffff",
+                            borderRadius:14,
+                            padding:26,
+                            width:400,
+                            maxWidth:"92vw"
+                        }}
+
+                    >
+
+                        <h3
+
+                            style={{
+                                fontSize:18,
+                                fontWeight:700,
+                                marginBottom:6
+                            }}
+
+                        >
+
+                            Editar licença
+
+                        </h3>
+
+
+                        <p
+
+                            style={{
+                                color:"#6b7280",
+                                fontSize:14,
+                                marginBottom:16
+                            }}
+
+                        >
+
+                            {licencaEditando.empresa} — {licencaEditando.codigo_licenca}
+
+                        </p>
+
+
+                        {
+
+                        erroEdicao &&
+
+                        (
+
+                            <div
+
+                                style={{
+                                    background:"#fef2f2",
+                                    color:"#dc2626",
+                                    padding:"10px 14px",
+                                    borderRadius:8,
+                                    marginBottom:16,
+                                    fontSize:14
+                                }}
+
+                            >
+
+                                {erroEdicao}
+
+                            </div>
+
+                        )
+
+                        }
+
+
+                        <div style={{display:"flex", flexDirection:"column", gap:12}}>
+
+                            <label>
+
+                                Status
+
+                                <select
+
+                                    value={formEdicao.status}
+
+                                    onChange={(e)=>
+                                        setFormEdicao({
+                                            ...formEdicao,
+                                            status: e.target.value
+                                        })
+                                    }
+
+                                >
+
+                                    <option value="ATIVA">Ativa</option>
+                                    <option value="EXPIRADA">Expirada</option>
+                                    <option value="CANCELADA">Cancelada</option>
+
+                                </select>
+
+                            </label>
+
+
+                            <label>
+
+                                Plano
+
+                                <select
+
+                                    value={formEdicao.plano_id}
+
+                                    onChange={(e)=>
+                                        setFormEdicao({
+                                            ...formEdicao,
+                                            plano_id: e.target.value
+                                        })
+                                    }
+
+                                >
+
+                                    {
+
+                                    planos.map((plano)=>(
+
+                                        <option
+
+                                            key={plano.id}
+                                            value={plano.id}
+
+                                        >
+
+                                            {plano.nome}
+
+                                        </option>
+
+                                    ))
+
+                                    }
+
+                                </select>
+
+                            </label>
+
+                        </div>
+
+
+                        <div
+
+                            style={{
+                                display:"flex",
+                                justifyContent:"flex-end",
+                                gap:10,
+                                marginTop:22
+                            }}
+
+                        >
+
+                            <button
+
+                                onClick={fecharEdicaoLicenca}
+
+                                disabled={salvandoEdicao}
+
+                                style={{
+                                    border:"1px solid #e5e7eb",
+                                    background:"#ffffff",
+                                    padding:"10px 18px",
+                                    borderRadius:8,
+                                    fontWeight:600
+                                }}
+
+                            >
+
+                                Cancelar
+
+                            </button>
+
+
+                            <button
+
+                                onClick={salvarEdicaoLicenca}
+
+                                disabled={salvandoEdicao}
+
+                                style={{
+                                    border:"none",
+                                    background:"#2563eb",
+                                    color:"#ffffff",
+                                    padding:"10px 18px",
+                                    borderRadius:8,
+                                    fontWeight:600
+                                }}
+
+                            >
+
+                                {salvandoEdicao ? "Salvando..." : "Salvar alterações"}
 
                             </button>
 

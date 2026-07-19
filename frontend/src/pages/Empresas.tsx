@@ -45,6 +45,10 @@ export default function Empresas() {
 
     const [form,setForm] = useState<NovaEmpresaDTO>(formVazio);
 
+    const [empresaEditando,setEmpresaEditando] = useState<EmpresaDTO | null>(null);
+
+    const [excluindo,setExcluindo] = useState<string | null>(null);
+
 
 
     async function carregarEmpresas(){
@@ -84,9 +88,31 @@ export default function Empresas() {
 
 
 
-    function abrirModal(){
+    function abrirModal(empresa?: EmpresaDTO){
 
-        setForm(formVazio);
+        if(empresa){
+
+            setEmpresaEditando(empresa);
+
+            setForm({
+                razao_social: empresa.razao_social,
+                nome_fantasia: empresa.nome_fantasia,
+                whatsapp: empresa.whatsapp,
+                cnpj: empresa.cnpj ?? "",
+                telefone: empresa.telefone ?? "",
+                email: empresa.email ?? "",
+                cidade: empresa.cidade ?? "",
+                uf: empresa.uf ?? "",
+                observacoes: empresa.observacoes ?? ""
+            });
+
+        }else{
+
+            setEmpresaEditando(null);
+            setForm(formVazio);
+
+        }
+
         setErroForm("");
         setModalAberto(true);
 
@@ -127,7 +153,18 @@ export default function Empresas() {
             setSalvando(true);
             setErroForm("");
 
-            await api.criarEmpresa(form);
+            if(empresaEditando){
+
+                await api.atualizarEmpresa(
+                    empresaEditando.id,
+                    form
+                );
+
+            }else{
+
+                await api.criarEmpresa(form);
+
+            }
 
             setModalAberto(false);
 
@@ -136,7 +173,7 @@ export default function Empresas() {
         }catch(erro: any){
 
             console.error(
-                "Erro ao criar empresa",
+                "Erro ao salvar empresa",
                 erro
             );
 
@@ -149,6 +186,41 @@ export default function Empresas() {
         }finally{
 
             setSalvando(false);
+
+        }
+
+    }
+
+
+
+    async function excluirEmpresa(empresa: EmpresaDTO){
+
+        const confirmou = window.confirm(
+            `Cancelar o cadastro de "${empresa.nome_fantasia}"? Isso não apaga os dados, só marca a empresa como CANCELADA.`
+        );
+
+        if(!confirmou) return;
+
+        try{
+
+            setExcluindo(empresa.id);
+
+            await api.excluirEmpresa(empresa.id);
+
+            await carregarEmpresas();
+
+        }catch(erro){
+
+            console.error(
+                "Erro ao cancelar empresa",
+                erro
+            );
+
+            alert("Não foi possível cancelar a empresa.");
+
+        }finally{
+
+            setExcluindo(null);
 
         }
 
@@ -230,7 +302,7 @@ export default function Empresas() {
 
                 <button
 
-                    onClick={abrirModal}
+                    onClick={()=> abrirModal()}
 
                     style={{
                         display:"flex",
@@ -430,8 +502,14 @@ export default function Empresas() {
                                     <span
 
                                         style={{
-                                            background:"#dcfce7",
-                                            color:"#166534",
+                                            background:
+                                                empresa.status === "ATIVA"
+                                                    ? "#dcfce7"
+                                                    : "#fef2f2",
+                                            color:
+                                                empresa.status === "ATIVA"
+                                                    ? "#166534"
+                                                    : "#dc2626",
                                             padding:"5px 10px",
                                             borderRadius:20,
                                             fontSize:12
@@ -439,7 +517,7 @@ export default function Empresas() {
 
                                     >
 
-                                        {empresa.status ?? "Ativa"}
+                                        {empresa.status ?? "ATIVA"}
 
                                     </span>
 
@@ -461,6 +539,8 @@ export default function Empresas() {
 
                                         <button
 
+                                            onClick={()=> abrirModal(empresa)}
+
                                             style={{
                                                 border:"none",
                                                 background:"#eff6ff",
@@ -480,6 +560,10 @@ export default function Empresas() {
 
 
                                         <button
+
+                                            onClick={()=> excluirEmpresa(empresa)}
+
+                                            disabled={excluindo === empresa.id}
 
                                             style={{
                                                 border:"none",
@@ -572,7 +656,7 @@ export default function Empresas() {
 
                         >
 
-                            Nova empresa
+                            {empresaEditando ? "Editar empresa" : "Nova empresa"}
 
                         </h3>
 
@@ -848,7 +932,7 @@ export default function Empresas() {
 
                             >
 
-                                {salvando ? "Salvando..." : "Salvar empresa"}
+                                {salvando ? "Salvando..." : (empresaEditando ? "Salvar alterações" : "Salvar empresa")}
 
                             </button>
 

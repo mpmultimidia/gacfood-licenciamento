@@ -11,7 +11,8 @@ import {
 import Card from "../components/Card";
 
 import api, {
-    PlanoDTO
+    PlanoDTO,
+    NovoPlanoDTO
 } from "../api/cliente";
 
 
@@ -23,6 +24,156 @@ export default function Planos() {
     const [busca,setBusca] = useState("");
 
     const [carregando,setCarregando] = useState(false);
+
+    const [modalAberto,setModalAberto] = useState(false);
+
+    const [salvando,setSalvando] = useState(false);
+
+    const [erroForm,setErroForm] = useState("");
+
+    const [planoEditando,setPlanoEditando] = useState<PlanoDTO | null>(null);
+
+    const [excluindo,setExcluindo] = useState<string | null>(null);
+
+    const formVazio: NovoPlanoDTO = {
+        nome: "",
+        descricao: "",
+        valor: 0,
+        ativo: true
+    };
+
+    const [form,setForm] = useState<NovoPlanoDTO>(formVazio);
+
+
+
+    function abrirModal(plano?: PlanoDTO){
+
+        if(plano){
+
+            setPlanoEditando(plano);
+
+            setForm({
+                nome: plano.nome,
+                descricao: plano.descricao ?? "",
+                valor: plano.valor ?? 0,
+                ativo: plano.ativo
+            });
+
+        }else{
+
+            setPlanoEditando(null);
+            setForm(formVazio);
+
+        }
+
+        setErroForm("");
+        setModalAberto(true);
+
+    }
+
+
+
+    function fecharModal(){
+
+        if(salvando) return;
+
+        setModalAberto(false);
+
+    }
+
+
+
+    async function salvarPlano(){
+
+        if(!form.nome.trim()){
+
+            setErroForm("Informe o nome do plano.");
+
+            return;
+
+        }
+
+        try{
+
+            setSalvando(true);
+            setErroForm("");
+
+            if(planoEditando){
+
+                await api.atualizarPlano(
+                    planoEditando.id,
+                    form
+                );
+
+            }else{
+
+                await api.criarPlano(form);
+
+            }
+
+            setModalAberto(false);
+
+            await carregarPlanos();
+
+        }catch(erro: any){
+
+            console.error(
+                "Erro ao salvar plano",
+                erro
+            );
+
+            setErroForm(
+                erro?.response?.data?.erro
+                ??
+                "Não foi possível salvar o plano. Tente novamente."
+            );
+
+        }finally{
+
+            setSalvando(false);
+
+        }
+
+    }
+
+
+
+    async function excluirPlano(plano: PlanoDTO){
+
+        const confirmou = window.confirm(
+            `Excluir o plano "${plano.nome}"? Só é possível excluir planos que não estejam em uso por nenhuma empresa/licença.`
+        );
+
+        if(!confirmou) return;
+
+        try{
+
+            setExcluindo(plano.id);
+
+            await api.excluirPlano(plano.id);
+
+            await carregarPlanos();
+
+        }catch(erro: any){
+
+            console.error(
+                "Erro ao excluir plano",
+                erro
+            );
+
+            alert(
+                erro?.response?.data?.erro
+                ??
+                "Não foi possível excluir o plano (talvez esteja em uso)."
+            );
+
+        }finally{
+
+            setExcluindo(null);
+
+        }
+
+    }
 
 
 
@@ -137,6 +288,8 @@ export default function Planos() {
 
 
                 <button
+
+                    onClick={()=> abrirModal()}
 
                     style={{
                         display:"flex",
@@ -348,8 +501,8 @@ export default function Planos() {
                                     <span
 
                                         style={{
-                                            background:"#dcfce7",
-                                            color:"#166534",
+                                            background: plano.ativo ? "#dcfce7" : "#fef2f2",
+                                            color: plano.ativo ? "#166534" : "#dc2626",
                                             padding:"5px 10px",
                                             borderRadius:20,
                                             fontSize:12
@@ -357,7 +510,7 @@ export default function Planos() {
 
                                     >
 
-                                        {plano.status ?? "Ativo"}
+                                        {plano.ativo ? "Ativo" : "Inativo"}
 
                                     </span>
 
@@ -378,6 +531,8 @@ export default function Planos() {
 
                                         <button
 
+                                            onClick={()=> abrirModal(plano)}
+
                                             style={{
                                                 border:"none",
                                                 background:"#eff6ff",
@@ -397,6 +552,10 @@ export default function Planos() {
 
 
                                         <button
+
+                                            onClick={()=> excluirPlano(plano)}
+
+                                            disabled={excluindo === plano.id}
 
                                             style={{
                                                 border:"none",
@@ -440,6 +599,252 @@ export default function Planos() {
 
 
             </Card>
+
+
+            {
+
+            modalAberto &&
+
+            (
+
+                <div
+
+                    onClick={fecharModal}
+
+                    style={{
+                        position:"fixed",
+                        inset:0,
+                        background:"rgba(0,0,0,.45)",
+                        display:"flex",
+                        alignItems:"center",
+                        justifyContent:"center",
+                        zIndex:50
+                    }}
+
+                >
+
+                    <div
+
+                        onClick={(e)=>e.stopPropagation()}
+
+                        style={{
+                            background:"#ffffff",
+                            borderRadius:14,
+                            padding:26,
+                            width:420,
+                            maxWidth:"92vw"
+                        }}
+
+                    >
+
+                        <h3
+
+                            style={{
+                                fontSize:20,
+                                fontWeight:700,
+                                marginBottom:18
+                            }}
+
+                        >
+
+                            {planoEditando ? "Editar plano" : "Novo plano"}
+
+                        </h3>
+
+
+                        {
+
+                        erroForm &&
+
+                        (
+
+                            <div
+
+                                style={{
+                                    background:"#fef2f2",
+                                    color:"#dc2626",
+                                    padding:"10px 14px",
+                                    borderRadius:8,
+                                    marginBottom:16,
+                                    fontSize:14
+                                }}
+
+                            >
+
+                                {erroForm}
+
+                            </div>
+
+                        )
+
+                        }
+
+
+                        <div style={{display:"flex", flexDirection:"column", gap:12}}>
+
+                            <label>
+
+                                Nome do plano *
+
+                                <input
+
+                                    value={form.nome}
+
+                                    onChange={(e)=>
+                                        setForm({
+                                            ...form,
+                                            nome: e.target.value
+                                        })
+                                    }
+
+                                />
+
+                            </label>
+
+
+                            <label>
+
+                                Descrição
+
+                                <textarea
+
+                                    value={form.descricao}
+
+                                    rows={3}
+
+                                    onChange={(e)=>
+                                        setForm({
+                                            ...form,
+                                            descricao: e.target.value
+                                        })
+                                    }
+
+                                />
+
+                            </label>
+
+
+                            <label>
+
+                                Valor (R$)
+
+                                <input
+
+                                    type="number"
+
+                                    min={0}
+
+                                    step="0.01"
+
+                                    value={form.valor}
+
+                                    onChange={(e)=>
+                                        setForm({
+                                            ...form,
+                                            valor: Number(e.target.value)
+                                        })
+                                    }
+
+                                />
+
+                            </label>
+
+
+                            <label
+
+                                style={{
+                                    display:"flex",
+                                    alignItems:"center",
+                                    gap:8,
+                                    flexDirection:"row"
+                                }}
+
+                            >
+
+                                <input
+
+                                    type="checkbox"
+
+                                    checked={form.ativo}
+
+                                    onChange={(e)=>
+                                        setForm({
+                                            ...form,
+                                            ativo: e.target.checked
+                                        })
+                                    }
+
+                                />
+
+                                Plano ativo
+
+                            </label>
+
+                        </div>
+
+
+                        <div
+
+                            style={{
+                                display:"flex",
+                                justifyContent:"flex-end",
+                                gap:10,
+                                marginTop:22
+                            }}
+
+                        >
+
+                            <button
+
+                                onClick={fecharModal}
+
+                                disabled={salvando}
+
+                                style={{
+                                    border:"1px solid #e5e7eb",
+                                    background:"#ffffff",
+                                    padding:"10px 18px",
+                                    borderRadius:8,
+                                    fontWeight:600
+                                }}
+
+                            >
+
+                                Cancelar
+
+                            </button>
+
+
+                            <button
+
+                                onClick={salvarPlano}
+
+                                disabled={salvando}
+
+                                style={{
+                                    border:"none",
+                                    background:"#2563eb",
+                                    color:"#ffffff",
+                                    padding:"10px 18px",
+                                    borderRadius:8,
+                                    fontWeight:600
+                                }}
+
+                            >
+
+                                {salvando ? "Salvando..." : (planoEditando ? "Salvar alterações" : "Criar plano")}
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            )
+
+            }
 
 
         </div>
