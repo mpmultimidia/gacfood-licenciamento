@@ -3,8 +3,10 @@ import { resumoSistema } from "../../servicos/dashboard.js";
 
 const router = Router();
 
-router.get("/", async (_req, res) => {
-  const resultado = await resumoSistema();
+router.get("/", async (req, res) => {
+  const { inicio, fim } = req.query as { inicio?: string; fim?: string };
+
+  const resultado = await resumoSistema({ inicio, fim });
 
   res.json({
     sucesso: true,
