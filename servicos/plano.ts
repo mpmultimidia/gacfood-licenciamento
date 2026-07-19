@@ -13,6 +13,10 @@ export interface Plano {
 
     ativo?: boolean;
 
+    limite_dispositivos_padrao?: number;
+
+    dias_validade_padrao?: number;
+
     criado_em?: string;
 
     atualizado_em?: string;
@@ -187,5 +191,69 @@ export async function excluirPlano(
 ) {
 
     return planoService.excluir(id);
+
+}
+
+
+
+/**
+ * Devolve os IDs das funcionalidades (módulos) já habilitadas para
+ * um plano — usado para pré-marcar os checkboxes na tela de edição.
+ */
+export async function listarFuncionalidadesDoPlano(
+    planoId: string
+): Promise<string[]> {
+
+    const { data, error } = await supabase
+        .from("plano_funcionalidades")
+        .select("funcionalidade_id")
+        .eq("plano_id", planoId)
+        .eq("habilitado", true);
+
+    if (error) {
+        throw new Error(`Erro ao listar módulos do plano: ${error.message}`);
+    }
+
+    return (data ?? []).map((linha: any) => linha.funcionalidade_id);
+
+}
+
+
+
+/**
+ * Substitui por completo o conjunto de módulos habilitados para um
+ * plano — apaga as associações antigas e grava as novas de uma vez.
+ */
+export async function definirFuncionalidadesDoPlano(
+    planoId: string,
+    funcionalidadeIds: string[]
+): Promise<void> {
+
+    const { error: erroExcluir } = await supabase
+        .from("plano_funcionalidades")
+        .delete()
+        .eq("plano_id", planoId);
+
+    if (erroExcluir) {
+        throw new Error(`Erro ao atualizar módulos do plano: ${erroExcluir.message}`);
+    }
+
+    if (funcionalidadeIds.length === 0) {
+        return;
+    }
+
+    const linhas = funcionalidadeIds.map((funcionalidadeId) => ({
+        plano_id: planoId,
+        funcionalidade_id: funcionalidadeId,
+        habilitado: true,
+    }));
+
+    const { error: erroInserir } = await supabase
+        .from("plano_funcionalidades")
+        .insert(linhas as any);
+
+    if (erroInserir) {
+        throw new Error(`Erro ao atualizar módulos do plano: ${erroInserir.message}`);
+    }
 
 }
