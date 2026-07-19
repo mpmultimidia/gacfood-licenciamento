@@ -61,7 +61,7 @@ export async function criarLicenca(req: Request, res: Response): Promise<void> {
 
   const { data: plano, error: erroPlano } = await supabase
     .from('planos')
-    .select('id, nome, dias_validade_padrao')
+    .select('id, nome, dias_validade_padrao, limite_dispositivos_padrao')
     .eq('id', plano_id)
     .single();
 
@@ -91,6 +91,18 @@ export async function criarLicenca(req: Request, res: Response): Promise<void> {
     .single();
 
   if (erroLicenca) throw erroLicenca;
+
+  // O limite de dispositivos da empresa passa a seguir o padrão do
+  // plano escolhido (ex.: plano Básico = até 3 dispositivos). Se o
+  // admin já tiver definido um limite manual maior/diferente direto
+  // no cadastro da empresa, isso é sobrescrito pelo plano — é
+  // intencional, já que o plano é a fonte da verdade do limite.
+  if ((plano as any).limite_dispositivos_padrao != null) {
+    await supabase
+      .from('empresas')
+      .update({ limite_dispositivos: (plano as any).limite_dispositivos_padrao } as any)
+      .eq('id', empresa_id);
+  }
 
   await supabase
     .from('historico_licencas')
