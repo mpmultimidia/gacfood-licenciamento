@@ -5,6 +5,8 @@ import {
   listarUsuarios,
   buscarUsuario,
   criarUsuario,
+  atualizarUsuario,
+  excluirUsuario,
 } from "../../servicos/usuario.js";
 
 const router = Router();
@@ -49,6 +51,34 @@ router.post(
       ok: true,
       usuario: resultado,
     });
+  })
+);
+
+router.put(
+  "/:id",
+  autenticarAdmin,
+  envolverAsync(async (req, res) => {
+    const resultado = await atualizarUsuario(
+      req.params.id,
+      req.body
+    );
+
+    res.json({
+      ok: true,
+      usuario: resultado,
+    });
+  })
+);
+
+router.delete(
+  "/:id",
+  autenticarAdmin,
+  envolverAsync(async (req, res) => {
+    await excluirUsuario(
+      req.params.id
+    );
+
+    res.json({ ok: true });
   })
 );
 
