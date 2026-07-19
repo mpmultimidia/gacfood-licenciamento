@@ -3,23 +3,24 @@ import {
   registrarEventoSistema,
   listarLogsSistema
 } from "../../servicos/logsSistema.js";
+import { autenticarAdmin } from "../middleware/autenticar.js";
 
 const router = Router();
 
-router.get("/", async (_req, res) => {
+router.get("/", autenticarAdmin, async (_req, res) => {
   const resultado = await listarLogsSistema();
 
   res.json(resultado);
 });
 
-router.post("/", async (req, res) => {
-  const resultado =
-    await registrarEventoSistema(
-      req.body.evento,
-      req.body.detalhes
-    );
+router.post("/", autenticarAdmin, async (req, res) => {
+  await registrarEventoSistema(
+    req.body.mensagem,
+    req.body.tipo,
+    (req as any).usuario?.login
+  );
 
-  res.json(resultado);
+  res.json({ ok: true });
 });
 
 export default router;

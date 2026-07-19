@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { envolverAsync } from "../middleware/tratarErros.js";
 import { autenticarAdministrador } from "../../servicos/administrador.js";
 import { ambiente } from "../../config/ambiente.js";
+import { registrarEventoSistema } from "../../servicos/logsSistema.js";
 
 const router = Router();
 
@@ -27,6 +28,12 @@ router.post(
     const administrador = await autenticarAdministrador(login, senha);
 
     if (!administrador) {
+      await registrarEventoSistema(
+        `Tentativa de login falhou para "${login}".`,
+        "AVISO",
+        login
+      );
+
       res.status(401).json({
         ok: false,
         erro: "Login ou senha inválidos.",
@@ -42,6 +49,12 @@ router.post(
       },
       ambiente.apiKeyAdmin,
       { expiresIn: "8h" }
+    );
+
+    await registrarEventoSistema(
+      `Login realizado.`,
+      "INFO",
+      administrador.login
     );
 
     res.json({
