@@ -12,7 +12,8 @@ import Card from "../components/Card";
 
 import api, {
     PlanoDTO,
-    NovoPlanoDTO
+    NovoPlanoDTO,
+    ModuloDTO
 } from "../api/cliente";
 
 
@@ -35,29 +36,59 @@ export default function Planos() {
 
     const [excluindo,setExcluindo] = useState<string | null>(null);
 
+    const [modulos,setModulos] = useState<ModuloDTO[]>([]);
+
     const formVazio: NovoPlanoDTO = {
         nome: "",
         descricao: "",
         valor: 0,
-        ativo: true
+        ativo: true,
+        limite_dispositivos_padrao: 1,
+        funcionalidades: []
     };
 
     const [form,setForm] = useState<NovoPlanoDTO>(formVazio);
 
 
 
-    function abrirModal(plano?: PlanoDTO){
+    async function abrirModal(plano?: PlanoDTO){
+
+        setErroForm("");
+        setModalAberto(true);
+
+        try{
+
+            const respostaModulos = await api.listarModulos();
+            setModulos(respostaModulos.data ?? []);
+
+        }catch(erro){
+
+            console.error("Erro ao carregar módulos", erro);
+
+        }
 
         if(plano){
 
             setPlanoEditando(plano);
 
-            setForm({
-                nome: plano.nome,
-                descricao: plano.descricao ?? "",
-                valor: plano.valor ?? 0,
-                ativo: plano.ativo
-            });
+            try{
+
+                const respostaPlano = await api.buscarPlano(plano.id);
+
+                setForm({
+                    nome: respostaPlano.data.nome,
+                    descricao: respostaPlano.data.descricao ?? "",
+                    valor: respostaPlano.data.valor ?? 0,
+                    ativo: respostaPlano.data.ativo,
+                    limite_dispositivos_padrao: respostaPlano.data.limite_dispositivos_padrao ?? 1,
+                    funcionalidades: respostaPlano.data.funcionalidades ?? []
+                });
+
+            }catch(erro){
+
+                console.error("Erro ao carregar plano", erro);
+
+            }
 
         }else{
 
@@ -66,8 +97,19 @@ export default function Planos() {
 
         }
 
-        setErroForm("");
-        setModalAberto(true);
+    }
+
+
+
+    function alternarModulo(id: string){
+
+        const atual = form.funcionalidades ?? [];
+
+        const novo = atual.includes(id)
+            ? atual.filter((m)=> m !== id)
+            : [...atual, id];
+
+        setForm({ ...form, funcionalidades: novo });
 
     }
 
@@ -779,6 +821,121 @@ export default function Planos() {
                                 Plano ativo
 
                             </label>
+
+
+                            <label>
+
+                                Quantas licenças (dispositivos) esse plano permite *
+
+                                <input
+
+                                    type="number"
+
+                                    min={1}
+
+                                    value={form.limite_dispositivos_padrao}
+
+                                    onChange={(e)=>
+                                        setForm({
+                                            ...form,
+                                            limite_dispositivos_padrao: Number(e.target.value)
+                                        })
+                                    }
+
+                                />
+
+                            </label>
+
+
+                            <div>
+
+                                <div style={{marginBottom:8, fontWeight:600, fontSize:14}}>
+
+                                    Módulos incluídos neste plano
+
+                                </div>
+
+
+                                {
+
+                                modulos.length === 0
+
+                                ?
+
+                                (
+
+                                    <div style={{fontSize:13, color:"#9ca3af"}}>
+
+                                        Nenhum módulo cadastrado ainda.
+
+                                    </div>
+
+                                )
+
+                                :
+
+                                (
+
+                                    <div
+
+                                        style={{
+                                            display:"flex",
+                                            flexDirection:"column",
+                                            gap:8,
+                                            maxHeight:180,
+                                            overflowY:"auto",
+                                            border:"1px solid #e5e7eb",
+                                            borderRadius:8,
+                                            padding:12
+                                        }}
+
+                                    >
+
+                                        {
+
+                                        modulos.map((modulo)=>(
+
+                                            <label
+
+                                                key={modulo.id}
+
+                                                style={{
+                                                    display:"flex",
+                                                    alignItems:"center",
+                                                    gap:8,
+                                                    flexDirection:"row",
+                                                    fontWeight:400
+                                                }}
+
+                                            >
+
+                                                <input
+
+                                                    type="checkbox"
+
+                                                    checked={
+                                                        (form.funcionalidades ?? []).includes(modulo.id)
+                                                    }
+
+                                                    onChange={()=> alternarModulo(modulo.id)}
+
+                                                />
+
+                                                {modulo.nome}
+
+                                            </label>
+
+                                        ))
+
+                                        }
+
+                                    </div>
+
+                                )
+
+                                }
+
+                            </div>
 
                         </div>
 
