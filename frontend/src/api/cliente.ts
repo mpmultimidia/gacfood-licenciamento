@@ -67,6 +67,22 @@ export interface NovoPlanoDTO {
     ativo?: boolean;
 }
 
+export interface UsuarioDTO {
+    id: string;
+    nome: string;
+    login: string;
+    perfil: string;
+    ativo: boolean;
+    criado_em: string;
+}
+
+export interface NovoUsuarioDTO {
+    nome: string;
+    login: string;
+    senha: string;
+    perfil?: string;
+}
+
 const api = axios.create({
 
     baseURL:
@@ -187,6 +203,38 @@ const cliente = {
 
         return api.get(
             "/usuarios"
+        );
+
+    },
+
+
+
+    criarUsuario(dados: NovoUsuarioDTO){
+
+        return api.post(
+            "/usuarios",
+            dados
+        );
+
+    },
+
+
+
+    atualizarUsuario(id: string, dados: Partial<NovoUsuarioDTO> & {ativo?: boolean}){
+
+        return api.put(
+            `/usuarios/${id}`,
+            dados
+        );
+
+    },
+
+
+
+    excluirUsuario(id: string){
+
+        return api.delete(
+            `/usuarios/${id}`
         );
 
     },
