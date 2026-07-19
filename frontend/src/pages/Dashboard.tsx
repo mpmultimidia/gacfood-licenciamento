@@ -29,18 +29,40 @@ interface ReceitaPorPlano {
     total: number;
 }
 
+interface Movimentacao {
+    inicio: string;
+    fim: string;
+    novasEmpresas: number;
+    licencasEmitidas: number;
+    licencasCanceladas: number;
+    receitaGerada: number;
+}
+
+function dataDeHoje(diasAtras: number): string {
+    const d = new Date();
+    d.setDate(d.getDate() - diasAtras);
+    return d.toISOString().slice(0, 10);
+}
+
 export default function Dashboard() {
 
     const [contadores,setContadores] = useState({
         empresas: 0,
         licencas: 0,
         usuarios: 0,
-        planos: 0
+        planos: 0,
+        licencasCanceladas: 0
     });
 
     const [receitaPorPlano,setReceitaPorPlano] = useState<ReceitaPorPlano[]>([]);
 
     const [receitaTotal,setReceitaTotal] = useState(0);
+
+    const [movimentacao,setMovimentacao] = useState<Movimentacao | null>(null);
+
+    const [periodoInicio,setPeriodoInicio] = useState(dataDeHoje(30));
+
+    const [periodoFim,setPeriodoFim] = useState(dataDeHoje(0));
 
     const [vencendo,setVencendo] = useState<VencendoItem[]>([]);
 
@@ -50,59 +72,66 @@ export default function Dashboard() {
 
 
 
-    useEffect(()=>{
+    async function carregar(){
 
-        async function carregar(){
+        try{
 
-            try{
+            setCarregando(true);
 
-                setCarregando(true);
+            const [respostaDashboard, respostaVencendo] = await Promise.all([
+                api.dashboard({ inicio: periodoInicio, fim: periodoFim }),
+                api.licencasVencendo()
+            ]);
 
-                const [respostaDashboard, respostaVencendo] = await Promise.all([
-                    api.dashboard(),
-                    api.licencasVencendo()
-                ]);
+            const dados = respostaDashboard.data?.dados;
 
-                setContadores(
-                    respostaDashboard.data?.dados ?? {
-                        empresas: 0,
-                        licencas: 0,
-                        usuarios: 0,
-                        planos: 0
-                    }
-                );
+            setContadores({
+                empresas: dados?.empresas ?? 0,
+                licencas: dados?.licencas ?? 0,
+                usuarios: dados?.usuarios ?? 0,
+                planos: dados?.planos ?? 0,
+                licencasCanceladas: dados?.licencasCanceladas ?? 0
+            });
 
-                setReceitaPorPlano(
-                    respostaDashboard.data?.dados?.receitaPorPlano ?? []
-                );
+            setReceitaPorPlano(
+                dados?.receitaPorPlano ?? []
+            );
 
-                setReceitaTotal(
-                    respostaDashboard.data?.dados?.receitaTotal ?? 0
-                );
+            setReceitaTotal(
+                dados?.receitaTotal ?? 0
+            );
 
-                setVencendo(
-                    respostaVencendo.data?.licencas ?? []
-                );
+            setMovimentacao(
+                dados?.movimentacao ?? null
+            );
 
-                setErroConexao(false);
+            setVencendo(
+                respostaVencendo.data?.licencas ?? []
+            );
 
-            }catch(erro){
+            setErroConexao(false);
 
-                console.error("Erro ao carregar dashboard", erro);
+        }catch(erro){
 
-                setErroConexao(true);
+            console.error("Erro ao carregar dashboard", erro);
 
-            }finally{
+            setErroConexao(true);
 
-                setCarregando(false);
+        }finally{
 
-            }
+            setCarregando(false);
 
         }
 
+    }
+
+
+
+    useEffect(()=>{
+
         carregar();
 
-    },[]);
+    },[periodoInicio, periodoFim]);
 
 
     const metricas = [
@@ -142,6 +171,13 @@ export default function Dashboard() {
             valor: String(contadores.planos),
             icone: PackageCheck,
             cor: "#ea580c"
+        },
+
+        {
+            titulo: "Licenças canceladas",
+            valor: String(contadores.licencasCanceladas),
+            icone: KeyRound,
+            cor: "#dc2626"
         }
 
     ];
@@ -182,12 +218,149 @@ export default function Dashboard() {
             </div>
 
 
+            <Card
+
+                titulo="Movimentação no período"
+
+            >
+
+                <div
+
+                    style={{
+                        display:"flex",
+                        gap:15,
+                        alignItems:"flex-end",
+                        flexWrap:"wrap",
+                        marginBottom:20
+                    }}
+
+                >
+
+                    <label style={{fontSize:13}}>
+
+                        De
+
+                        <input
+
+                            type="date"
+
+                            value={periodoInicio}
+
+                            onChange={(e)=> setPeriodoInicio(e.target.value)}
+
+                        />
+
+                    </label>
+
+
+                    <label style={{fontSize:13}}>
+
+                        Até
+
+                        <input
+
+                            type="date"
+
+                            value={periodoFim}
+
+                            onChange={(e)=> setPeriodoFim(e.target.value)}
+
+                        />
+
+                    </label>
+
+
+                    <button
+
+                        onClick={()=>{ setPeriodoInicio(dataDeHoje(30)); setPeriodoFim(dataDeHoje(0)); }}
+
+                        style={{
+                            border:"1px solid #e5e7eb",
+                            background:"#f9fafb",
+                            padding:"8px 14px",
+                            borderRadius:6,
+                            fontSize:13,
+                            fontWeight:600
+                        }}
+
+                    >
+
+                        Últimos 30 dias
+
+                    </button>
+
+
+                    <button
+
+                        onClick={()=>{ setPeriodoInicio(dataDeHoje(90)); setPeriodoFim(dataDeHoje(0)); }}
+
+                        style={{
+                            border:"1px solid #e5e7eb",
+                            background:"#f9fafb",
+                            padding:"8px 14px",
+                            borderRadius:6,
+                            fontSize:13,
+                            fontWeight:600
+                        }}
+
+                    >
+
+                        Últimos 90 dias
+
+                    </button>
+
+                </div>
+
+
+                {
+
+                movimentacao &&
+
+                (
+
+                    <div
+                        style={{
+                            display:"grid",
+                            gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",
+                            gap:16
+                        }}
+                    >
+
+                        <MetricaMini titulo="Novas empresas" valor={String(movimentacao.novasEmpresas)} cor="#2563eb"/>
+
+                        <MetricaMini titulo="Licenças emitidas" valor={String(movimentacao.licencasEmitidas)} cor="#16a34a"/>
+
+                        <MetricaMini titulo="Licenças canceladas" valor={String(movimentacao.licencasCanceladas)} cor="#dc2626"/>
+
+                        <MetricaMini
+
+                            titulo="Receita gerada no período"
+
+                            valor={
+                                "R$ " +
+                                movimentacao.receitaGerada.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                            }
+
+                            cor="#16a34a"
+
+                        />
+
+                    </div>
+
+                )
+
+                }
+
+            </Card>
+
+
             <div
                 style={{
                     display:"grid",
                     gridTemplateColumns:
                     "repeat(auto-fit,minmax(230px,1fr))",
-                    gap:20
+                    gap:20,
+                    marginTop:25
                 }}
             >
 
@@ -597,6 +770,56 @@ function StatusItem({
 
             </div>
 
+
+        </div>
+
+    );
+
+}
+
+
+function MetricaMini({
+
+    titulo,
+
+    valor,
+
+    cor
+
+}:{
+
+    titulo:string;
+
+    valor:string;
+
+    cor:string;
+
+}){
+
+    return(
+
+        <div
+
+            style={{
+                background:"#f9fafb",
+                border:"1px solid #e5e7eb",
+                borderRadius:10,
+                padding:16
+            }}
+
+        >
+
+            <div style={{fontSize:13, color:"#6b7280"}}>
+
+                {titulo}
+
+            </div>
+
+            <div style={{fontSize:24, fontWeight:700, color:cor, marginTop:6}}>
+
+                {valor}
+
+            </div>
 
         </div>
 
