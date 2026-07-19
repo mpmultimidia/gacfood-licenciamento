@@ -309,12 +309,30 @@ export async function atualizarLicenca(req: Request, res: Response): Promise<voi
 export async function excluirLicenca(req: Request, res: Response): Promise<void> {
   const { id } = req.params;
 
-  const { error } = await supabase
+  const { data: licenca, error } = await supabase
     .from('licencas')
     .update({ status: 'CANCELADA' } as any)
-    .eq('id', id);
+    .eq('id', id)
+    .select('id, empresa_id, codigo_licenca, expira_em')
+    .single();
 
   if (error) throw error;
+
+  // Registra a data exata do cancelamento no histórico — antes disso não
+  // existia nenhum jeito de saber quando uma licença foi cancelada, só
+  // que ela ESTÁ cancelada. Isso é o que alimenta o filtro por período
+  // do dashboard.
+  await supabase
+    .from('historico_licencas')
+    .insert({
+      licenca_id: (licenca as any).id,
+      empresa_id: (licenca as any).empresa_id,
+      codigo_licenca: (licenca as any).codigo_licenca,
+      emitida_em: new Date().toISOString(),
+      expira_em: (licenca as any).expira_em,
+      motivo: 'CANCELAMENTO',
+      emitida_por: (req as any).usuario?.login ?? null,
+    } as any);
 
   await registrarEventoSistema(
     `Licença cancelada (id ${id}).`,
