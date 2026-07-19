@@ -1,25 +1,33 @@
 import { supabase } from "../supabase/conexao.js";
 
 export async function registrarEventoSistema(
-  evento: string,
-  detalhes?: unknown
+  mensagem: string,
+  tipo: string = "INFO",
+  usuario?: string | null
 ) {
-  return await supabase
+  const { error } = await supabase
     .from("logs_sistema")
     .insert({
-      evento,
-      detalhes,
-      criado_em: new Date()
-    })
-    .select()
-    .single();
+      tipo,
+      mensagem,
+      usuario: usuario ?? null,
+    } as any);
+
+  // Um log que falha nunca deve derrubar a ação principal — só avisa
+  // no console do servidor.
+  if (error) {
+    console.error("Erro ao gravar log do sistema:", error.message);
+  }
 }
 
 export async function listarLogsSistema() {
-  return await supabase
+  const { data, error } = await supabase
     .from("logs_sistema")
     .select("*")
-    .order("criado_em", {
-      ascending: false
-    });
+    .order("criado_em", { ascending: false })
+    .limit(200);
+
+  if (error) throw error;
+
+  return data ?? [];
 }
