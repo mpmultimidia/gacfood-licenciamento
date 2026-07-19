@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import {
     Building2,
     KeyRound,
@@ -10,35 +12,104 @@ import {
 } from "lucide-react";
 
 import Card from "../components/Card";
+import api from "../api/cliente";
+
+interface VencendoItem {
+    codigo_licenca: string;
+    expira_em: string;
+    empresa: { codigo: string; nome_fantasia: string } | null;
+}
 
 export default function Dashboard() {
+
+    const [contadores,setContadores] = useState({
+        empresas: 0,
+        licencas: 0,
+        usuarios: 0,
+        planos: 0
+    });
+
+    const [vencendo,setVencendo] = useState<VencendoItem[]>([]);
+
+    const [carregando,setCarregando] = useState(true);
+
+    const [erroConexao,setErroConexao] = useState(false);
+
+
+
+    useEffect(()=>{
+
+        async function carregar(){
+
+            try{
+
+                setCarregando(true);
+
+                const [respostaDashboard, respostaVencendo] = await Promise.all([
+                    api.dashboard(),
+                    api.licencasVencendo()
+                ]);
+
+                setContadores(
+                    respostaDashboard.data?.dados ?? {
+                        empresas: 0,
+                        licencas: 0,
+                        usuarios: 0,
+                        planos: 0
+                    }
+                );
+
+                setVencendo(
+                    respostaVencendo.data?.licencas ?? []
+                );
+
+                setErroConexao(false);
+
+            }catch(erro){
+
+                console.error("Erro ao carregar dashboard", erro);
+
+                setErroConexao(true);
+
+            }finally{
+
+                setCarregando(false);
+
+            }
+
+        }
+
+        carregar();
+
+    },[]);
+
 
     const metricas = [
 
         {
             titulo: "Empresas cadastradas",
-            valor: "0",
+            valor: String(contadores.empresas),
             icone: Building2,
             cor: "#2563eb"
         },
 
         {
-            titulo: "Licenças ativas",
-            valor: "0",
+            titulo: "Licenças emitidas",
+            valor: String(contadores.licencas),
             icone: KeyRound,
             cor: "#16a34a"
         },
 
         {
             titulo: "Usuários",
-            valor: "0",
+            valor: String(contadores.usuarios),
             icone: Users,
             cor: "#9333ea"
         },
 
         {
             titulo: "Planos",
-            valor: "0",
+            valor: String(contadores.planos),
             icone: PackageCheck,
             cor: "#ea580c"
         }
@@ -132,7 +203,7 @@ export default function Dashboard() {
                                             }}
                                         >
 
-                                            {item.valor}
+                                            {carregando ? "..." : item.valor}
 
                                         </div>
 
@@ -180,7 +251,9 @@ export default function Dashboard() {
 
                         titulo="API"
 
-                        valor="Aguardando conexão"
+                        valor={erroConexao ? "Offline / com erro" : "Online"}
+
+                        cor={erroConexao ? "#dc2626" : "#16a34a"}
 
                     />
 
@@ -191,7 +264,9 @@ export default function Dashboard() {
 
                         titulo="Banco de dados"
 
-                        valor="Aguardando conexão"
+                        valor={erroConexao ? "Sem resposta" : "Conectado"}
+
+                        cor={erroConexao ? "#dc2626" : "#16a34a"}
 
                     />
 
@@ -204,6 +279,8 @@ export default function Dashboard() {
 
                         valor="Online"
 
+                        cor="#16a34a"
+
                     />
 
 
@@ -213,32 +290,90 @@ export default function Dashboard() {
 
                 <Card
 
-                    titulo="Alertas"
+                    titulo="Alertas — licenças vencendo em breve"
 
                 >
 
-                    <div
-                        style={{
-                            display:"flex",
-                            gap:12,
-                            alignItems:"center",
-                            padding:15,
-                            background:"#fff7ed",
-                            borderRadius:10
-                        }}
-                    >
+                    {
 
-                        <AlertTriangle
-                            color="#ea580c"
-                        />
+                    vencendo.length === 0
 
-                        <span>
+                    ?
 
-                            Nenhuma licença vencendo encontrada.
+                    (
 
-                        </span>
+                        <div
+                            style={{
+                                display:"flex",
+                                gap:12,
+                                alignItems:"center",
+                                padding:15,
+                                background:"#f0fdf4",
+                                borderRadius:10
+                            }}
+                        >
 
-                    </div>
+                            <AlertTriangle
+                                color="#16a34a"
+                            />
+
+                            <span>
+
+                                Nenhuma licença vencendo encontrada.
+
+                            </span>
+
+                        </div>
+
+                    )
+
+                    :
+
+                    (
+
+                        <div style={{display:"flex", flexDirection:"column", gap:10}}>
+
+                        {
+
+                        vencendo.map((item)=>(
+
+                            <div
+
+                                key={item.codigo_licenca}
+
+                                style={{
+                                    display:"flex",
+                                    gap:12,
+                                    alignItems:"center",
+                                    padding:12,
+                                    background:"#fff7ed",
+                                    borderRadius:10
+                                }}
+
+                            >
+
+                                <AlertTriangle
+                                    color="#ea580c"
+                                    size={18}
+                                />
+
+                                <span style={{fontSize:14}}>
+
+                                    <b>{item.empresa?.nome_fantasia ?? "Empresa"}</b> — vence em {new Date(item.expira_em).toLocaleDateString('pt-BR')}
+
+                                </span>
+
+                            </div>
+
+                        ))
+
+                        }
+
+                        </div>
+
+                    )
+
+                    }
 
 
                 </Card>
@@ -260,7 +395,9 @@ function StatusItem({
 
     titulo,
 
-    valor
+    valor,
+
+    cor
 
 }:{
 
@@ -269,6 +406,8 @@ function StatusItem({
     titulo:string;
 
     valor:string;
+
+    cor?:string;
 
 }){
 
@@ -302,7 +441,7 @@ function StatusItem({
                 <div
                     style={{
                         fontSize:13,
-                        color:"#6b7280"
+                        color: cor ?? "#6b7280"
                     }}
                 >
 
