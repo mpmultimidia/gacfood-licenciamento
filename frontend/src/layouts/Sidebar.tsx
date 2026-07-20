@@ -46,14 +46,16 @@ export default function Sidebar(){
 
     const {
 
-        sair
+        sair,
+
+        usuario
 
     } = useAuth();
 
 
 
 
-    const menu = [
+    const menuCompleto = [
 
 
         {
@@ -62,7 +64,9 @@ export default function Sidebar(){
 
             rota:"/dashboard",
 
-            icone:<LayoutDashboard/>
+            icone:<LayoutDashboard/>,
+
+            somenteAdministrador:true
 
         },
 
@@ -167,6 +171,13 @@ export default function Sidebar(){
 
 
     ];
+
+
+    const menu = menuCompleto.filter((item)=>
+
+        !item.somenteAdministrador || usuario?.tipo === "administrador"
+
+    );
 
 
 
