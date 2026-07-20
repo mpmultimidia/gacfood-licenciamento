@@ -1,6 +1,5 @@
 import {
-    createBrowserRouter,
-    Navigate
+    createBrowserRouter
 } from "react-router-dom";
 
 
@@ -8,6 +7,8 @@ import Layout from "../layouts/Layout";
 
 
 import ProtectedRoute from "../components/ProtectedRoute";
+import SomenteAdministrador from "../components/SomenteAdministrador";
+import RedirecionamentoInicial from "../components/RedirecionamentoInicial";
 
 
 import Login from "../pages/Login";
@@ -68,22 +69,26 @@ const router = createBrowserRouter([
                         index:true,
 
                         element:
-                        <Navigate
-
-                            to="/dashboard"
-
-                            replace
-
-                        />
+                        <RedirecionamentoInicial/>
 
                     },
 
 
                     {
 
-                        path:"dashboard",
+                        element:<SomenteAdministrador/>,
 
-                        element:<Dashboard/>
+                        children:[
+
+                            {
+
+                                path:"dashboard",
+
+                                element:<Dashboard/>
+
+                            }
+
+                        ]
 
                     },
 
