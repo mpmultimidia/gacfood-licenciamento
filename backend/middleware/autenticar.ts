@@ -6,6 +6,7 @@ export interface UsuarioAutenticado {
   id: string;
   login: string;
   perfil: string;
+  tipo: "administrador" | "usuario";
 }
 
 declare global {
@@ -22,6 +23,12 @@ export function autenticarCliente(
   next: NextFunction
 ): void {
   const chave = req.header("x-api-key");
+
+  console.log(
+    `[auth-diagnostico] recebida: "${chave}" (tamanho ${chave?.length ?? 0}, últimos 4: ${chave?.slice(-4)}) | ` +
+    `esperada: (tamanho ${ambiente.apiKeyCliente?.length ?? 0}, últimos 4: ${ambiente.apiKeyCliente?.slice(-4)}) | ` +
+    `bate: ${chave === ambiente.apiKeyCliente}`
+  );
 
   if (!chave || chave !== ambiente.apiKeyCliente) {
     res.status(401).json({
@@ -68,4 +75,23 @@ export function autenticarAdmin(
       erro: "Token inválido.",
     });
   }
+}
+
+// Usa DEPOIS de autenticarAdmin — bloqueia usuários secundários (tabela
+// lic.usuarios") de rotas restritas ao MASTER/administrador (ex.: o
+// Dashboard, que mostra receita e dados financeiros do negócio).
+export function exigirAdministrador(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  if (req.usuario?.tipo !== "administrador") {
+    res.status(403).json({
+      ok: false,
+      erro: "Acesso restrito ao administrador.",
+    });
+    return;
+  }
+
+  next();
 }
