@@ -11,6 +11,7 @@ interface Usuario {
     login: string;
     nome: string | null;
     perfil?: string;
+    tipo?: "administrador" | "usuario";
 }
 
 interface AuthContexto {
