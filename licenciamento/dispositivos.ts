@@ -31,7 +31,7 @@ export async function verificarERegistrarDispositivo(
   if (existente) {
     await supabase
       .from("licencas_dispositivos")
-      .update({ ultimo_acesso: new Date().toISOString() })
+      .update({ ultimo_acesso: new Date().toISOString() } as any)
       .eq("id", (existente as any).id);
     return;
   }
@@ -52,7 +52,7 @@ export async function verificarERegistrarDispositivo(
 
   const { error: erroInsercao } = await supabase
     .from("licencas_dispositivos")
-    .insert({ licenca_id: licencaId, hash_dispositivo: hashDispositivo });
+    .insert({ licenca_id: licencaId, hash_dispositivo: hashDispositivo } as any);
 
   if (erroInsercao) throw erroInsercao;
 }
