@@ -52,6 +52,18 @@ export interface NovaLicencaDTO {
     dias_validade?: number;
 }
 
+export interface NovaLicencaTruckDTO {
+    empresa_id: string;
+    dias_validade?: number;
+}
+
+export interface LicencaTruckCriadaDTO {
+    ok: boolean;
+    codigo_licenca: string;
+    empresa: string;
+    expira_em: string;
+}
+
 export interface PlanoDTO {
     id: string;
     nome: string;
@@ -359,6 +371,17 @@ const cliente = {
 
         return api.post(
             "/licencas",
+            dados
+        );
+
+    },
+
+
+
+    criarLicencaTruck(dados: NovaLicencaTruckDTO){
+
+        return api.post(
+            "/licencas/truck",
             dados
         );
 
