@@ -3,6 +3,7 @@ import { supabase } from "../supabase/conexao.js";
 import { garantirCredenciaisRestaurante } from "../supabase/authRestaurante.js";
 import { listarFuncionalidadesDoPlano } from "../servicos/funcionalidadesPlano.js";
 import { ambiente } from "../config/ambiente.js";
+import { verificarERegistrarDispositivo } from "./dispositivos.js";
 
 function gerarCodigoAtivacaoTexto(): string {
   let codigo = "";
@@ -51,9 +52,12 @@ export async function solicitarCodigoDeAtivacao(codigoEmpresa: string) {
 /**
  * Passo 2: o GACFOOD local chama isso com o código de 6 dígitos digitado
  * pelo cliente. Resolve a empresa, confirma que ela tem uma licença ativa,
- * marca o código como usado, e devolve TUDO que o GACFOOD precisa gravar
- * no .env desta instalação — inclusive as credenciais do Supabase deste
- * restaurante e a lista de módulos liberados pelo plano contratado.
+ * marca o código como usado, checa/registra o dispositivo, e devolve TUDO
+ * que o GACFOOD precisa gravar no .env desta instalação.
+ *
+ * hashDispositivo agora é OBRIGATÓRIO — sem ele não há como aplicar o
+ * limite de dispositivos contratado. O main.js precisa enviar isso (ver
+ * arquivo corrigido em conjunto com esta mudança).
  */
 export async function ativarOuRenovarLicenca(
   codigoAtivacao: string,
@@ -61,6 +65,12 @@ export async function ativarOuRenovarLicenca(
 ) {
   if (!codigoAtivacao) {
     throw new Error("Código de ativação não informado.");
+  }
+
+  if (!opcoes.hashDispositivo) {
+    throw new Error(
+      "Identificação do dispositivo não informada. Atualize o GACFOOD para a versão mais recente."
+    );
   }
 
   const { data: registro, error: erroBusca } = await supabase
@@ -85,7 +95,7 @@ export async function ativarOuRenovarLicenca(
 
   const { data: empresa, error: erroEmpresa } = await supabase
     .from("empresas")
-    .select("id, codigo, nome_fantasia")
+    .select("id, codigo, nome_fantasia, limite_dispositivos")
     .eq("id", (registro as any).empresa_id)
     .single();
 
@@ -106,18 +116,27 @@ export async function ativarOuRenovarLicenca(
     throw new Error("Esta empresa não possui uma licença ativa no momento.");
   }
 
+  // Checa o limite de dispositivos ANTES de consumir o código de ativação
+  // — se recusar aqui, o código de 6 dígitos continua válido para o
+  // cliente tentar de novo depois de resolver a situação (ex: liberar
+  // um dispositivo antigo), em vez de queimar o código à toa.
+  await verificarERegistrarDispositivo(
+    (licenca as any).id,
+    (empresa as any).limite_dispositivos ?? 1,
+    opcoes.hashDispositivo
+  );
+
   // Marca o código de 6 dígitos como usado — não pode ser reaproveitado.
   await supabase
     .from("codigos_ativacao")
     .update({ utilizado: true, utilizado_em: new Date().toISOString() })
     .eq("id", (registro as any).id);
 
-  // Registra o dispositivo/última validação, se informado.
   await supabase
     .from("licencas")
     .update({
       ultima_validacao: new Date().toISOString(),
-      ...(opcoes.hashDispositivo ? { hash_dispositivo: opcoes.hashDispositivo } : {}),
+      hash_dispositivo: opcoes.hashDispositivo,
     })
     .eq("id", (licenca as any).id);
 
