@@ -126,6 +126,107 @@ export async function criarLicenca(req: Request, res: Response): Promise<void> {
   res.json({ ok: true, licenca });
 }
 
+// ID fixo do plano "GACFOOD TRUCK" criado em lic.planos (17/09/2026).
+// Se um dia você recriar esse plano com outro ID, atualize aqui.
+const PLANO_TRUCK_ID = '0b980f35-8172-489d-8976-46aec17ede44';
+
+function gerarCodigoTruck(): string {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+/**
+ * POST /api/licencas/truck   (chave admin)
+ * body: { empresa_id: string, dias_validade?: number }
+ *
+ * Emite uma licença do GACFOOD TRUCK pra uma empresa já cadastrada no
+ * licenciamento — sem precisar abrir o Supabase manualmente. Sempre usa
+ * o plano fixo "GACFOOD TRUCK" e gera um código numérico de 6 dígitos
+ * (formato diferente do LIC-XXXX-XXXX usado pelo ERP, de propósito, pra
+ * ser mais fácil de digitar no celular). dias_validade é opcional — se
+ * não informado, usa 30 dias (o padrão do plano TRUCK).
+ */
+export async function criarLicencaTruck(req: Request, res: Response): Promise<void> {
+  const { empresa_id, dias_validade } = req.body as {
+    empresa_id?: string;
+    dias_validade?: number;
+  };
+
+  if (!empresa_id) {
+    res.status(400).json({ ok: false, erro: 'Informe a empresa (empresa_id).' });
+    return;
+  }
+
+  const { data: empresa, error: erroEmpresa } = await supabase
+    .from('empresas')
+    .select('id, nome_fantasia, status')
+    .eq('id', empresa_id)
+    .single();
+
+  if (erroEmpresa || !empresa) {
+    res.status(400).json({ ok: false, erro: 'Empresa não encontrada.' });
+    return;
+  }
+
+  const dias = dias_validade ?? 30;
+  const agora = new Date();
+  const expiraEm = new Date(agora.getTime() + dias * 24 * 60 * 60 * 1000);
+
+  // Garante um código de 6 dígitos que ainda não existe (colisão é rara,
+  // mas mais barato checar do que descobrir depois com um erro de
+  // unicidade no banco).
+  let codigo = gerarCodigoTruck();
+  for (let tentativa = 0; tentativa < 5; tentativa++) {
+    const { data: existente } = await supabase
+      .from('licencas')
+      .select('id')
+      .eq('codigo_licenca', codigo)
+      .maybeSingle();
+
+    if (!existente) break;
+    codigo = gerarCodigoTruck();
+  }
+
+  const { data: licenca, error: erroLicenca } = await supabase
+    .from('licencas')
+    .insert({
+      empresa_id,
+      plano_id: PLANO_TRUCK_ID,
+      codigo_licenca: codigo,
+      emitida_em: agora.toISOString(),
+      expira_em: expiraEm.toISOString(),
+      status: 'ATIVA',
+    } as any)
+    .select()
+    .single();
+
+  if (erroLicenca) throw erroLicenca;
+
+  await supabase
+    .from('historico_licencas')
+    .insert({
+      licenca_id: (licenca as any).id,
+      empresa_id,
+      codigo_licenca: codigo,
+      emitida_em: agora.toISOString(),
+      expira_em: expiraEm.toISOString(),
+      motivo: 'EMISSAO_TRUCK',
+      emitida_por: (req as any).usuario?.login ?? null,
+    } as any);
+
+  await registrarEventoSistema(
+    `Licença GACFOOD TRUCK emitida (${codigo}) para empresa ${(empresa as any).nome_fantasia}.`,
+    'INFO',
+    (req as any).usuario?.login
+  );
+
+  res.json({
+    ok: true,
+    codigo_licenca: codigo,
+    empresa: (empresa as any).nome_fantasia,
+    expira_em: expiraEm.toISOString(),
+  });
+}
+
 /**
  * POST /api/licencas/solicitar-codigo   (chave admin)
  * body: { codigoEmpresa: string }
