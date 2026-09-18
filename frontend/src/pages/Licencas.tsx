@@ -58,6 +58,20 @@ export default function Licencas() {
 
     const [erroCodigoLinha,setErroCodigoLinha] = useState("");
 
+    // ===== Emissão de licença GACFOOD TRUCK =====
+    const [modalTruckAberto,setModalTruckAberto] = useState(false);
+
+    const [formTruck,setFormTruck] = useState<{empresa_id:string; dias_validade?:number}>({
+        empresa_id: "",
+        dias_validade: 30
+    });
+
+    const [salvandoTruck,setSalvandoTruck] = useState(false);
+
+    const [erroTruck,setErroTruck] = useState("");
+
+    const [licencaTruckCriada,setLicencaTruckCriada] = useState<{codigo_licenca:string; empresa:string; expira_em:string} | null>(null);
+
 
 
     async function carregarLicencas(){
@@ -224,6 +238,92 @@ export default function Licencas() {
         }finally{
 
             setSalvando(false);
+
+        }
+
+    }
+
+
+
+    async function abrirModalTruck(){
+
+        setFormTruck({ empresa_id: "", dias_validade: 30 });
+        setErroTruck("");
+        setLicencaTruckCriada(null);
+        setModalTruckAberto(true);
+
+        // Reaproveita a mesma lista de empresas do modal do ERP — se ainda
+        // não foi carregada nesta sessão, carrega agora.
+        if(empresas.length === 0){
+
+            try{
+
+                const respEmpresas = await api.listarEmpresas();
+                setEmpresas(respEmpresas.data.empresas ?? []);
+
+            }catch(erro){
+
+                console.error("Erro ao carregar empresas", erro);
+
+            }
+
+        }
+
+    }
+
+
+
+    function fecharModalTruck(){
+
+        if(salvandoTruck) return;
+
+        setModalTruckAberto(false);
+
+    }
+
+
+
+    async function salvarLicencaTruck(){
+
+        if(!formTruck.empresa_id){
+
+            setErroTruck(
+                "Selecione a empresa."
+            );
+
+            return;
+
+        }
+
+        try{
+
+            setSalvandoTruck(true);
+            setErroTruck("");
+
+            const resposta = await api.criarLicencaTruck(formTruck);
+
+            setLicencaTruckCriada({
+                codigo_licenca: resposta.data.codigo_licenca,
+                empresa: resposta.data.empresa,
+                expira_em: resposta.data.expira_em
+            });
+
+        }catch(erro: any){
+
+            console.error(
+                "Erro ao emitir licença TRUCK",
+                erro
+            );
+
+            setErroTruck(
+                erro?.response?.data?.erro
+                ??
+                "Não foi possível emitir a licença. Tente novamente."
+            );
+
+        }finally{
+
+            setSalvandoTruck(false);
 
         }
 
@@ -553,6 +653,8 @@ export default function Licencas() {
                 </div>
 
 
+                <div style={{display:"flex", gap:10}}>
+
                 <button
 
                     onClick={abrirModal}
@@ -576,6 +678,33 @@ export default function Licencas() {
                     Nova licença
 
                 </button>
+
+
+                <button
+
+                    onClick={abrirModalTruck}
+
+                    style={{
+                        display:"flex",
+                        alignItems:"center",
+                        gap:8,
+                        background:"#ea580c",
+                        color:"#fff",
+                        border:"none",
+                        borderRadius:8,
+                        padding:"12px 18px",
+                        fontWeight:600
+                    }}
+
+                >
+
+                    <Plus size={18}/>
+
+                    Nova licença TRUCK
+
+                </button>
+
+                </div>
 
 
             </div>
@@ -1460,6 +1589,391 @@ export default function Licencas() {
                             >
 
                                 {salvando ? "Emitindo..." : "Emitir licença"}
+
+                            </button>
+
+                        </div>
+
+
+                        </>
+
+                        )
+
+                        }
+
+                    </div>
+
+                </div>
+
+            )
+
+            }
+
+
+            {
+
+            modalTruckAberto &&
+
+            (
+
+                <div
+
+                    onClick={fecharModalTruck}
+
+                    style={{
+                        position:"fixed",
+                        inset:0,
+                        background:"rgba(0,0,0,.45)",
+                        display:"flex",
+                        alignItems:"center",
+                        justifyContent:"center",
+                        zIndex:50
+                    }}
+
+                >
+
+                    <div
+
+                        onClick={(e)=>e.stopPropagation()}
+
+                        style={{
+                            background:"#ffffff",
+                            borderRadius:14,
+                            padding:26,
+                            width:440,
+                            maxWidth:"92vw",
+                            maxHeight:"88vh",
+                            overflowY:"auto"
+                        }}
+
+                    >
+
+                        <h3
+
+                            style={{
+                                fontSize:20,
+                                fontWeight:700,
+                                marginBottom:6
+                            }}
+
+                        >
+
+                            Nova licença GACFOOD TRUCK
+
+                        </h3>
+
+
+                        <p
+
+                            style={{
+                                color:"#6b7280",
+                                fontSize:14,
+                                marginBottom:18
+                            }}
+
+                        >
+
+                            Gera direto um código de 6 dígitos pra empresa digitar no app do celular — sem precisar do Supabase.
+
+                        </p>
+
+
+                        {
+
+                        licencaTruckCriada &&
+
+                        (
+
+                            <div>
+
+                                <div
+
+                                    style={{
+                                        background:"#dcfce7",
+                                        color:"#166534",
+                                        padding:"14px 16px",
+                                        borderRadius:8,
+                                        marginBottom:16,
+                                        fontSize:14
+                                    }}
+
+                                >
+
+                                    Licença TRUCK emitida para {licencaTruckCriada.empresa}! Envie este código para o cliente:
+
+                                </div>
+
+
+                                <div
+
+                                    style={{
+                                        display:"flex",
+                                        alignItems:"center",
+                                        gap:10,
+                                        border:"1px solid #e5e7eb",
+                                        borderRadius:8,
+                                        padding:"14px 16px",
+                                        marginBottom:8
+                                    }}
+
+                                >
+
+                                    <span
+
+                                        style={{
+                                            fontFamily:"monospace",
+                                            fontSize:26,
+                                            fontWeight:700,
+                                            letterSpacing:4,
+                                            flex:1
+                                        }}
+
+                                    >
+
+                                        {licencaTruckCriada.codigo_licenca}
+
+                                    </span>
+
+
+                                    <button
+
+                                        onClick={()=>
+                                            navigator.clipboard.writeText(
+                                                licencaTruckCriada.codigo_licenca
+                                            )
+                                        }
+
+                                        style={{
+                                            border:"1px solid #e5e7eb",
+                                            background:"#f9fafb",
+                                            padding:"8px 14px",
+                                            borderRadius:6,
+                                            fontWeight:600,
+                                            fontSize:13
+                                        }}
+
+                                    >
+
+                                        Copiar
+
+                                    </button>
+
+                                </div>
+
+
+                                <div
+
+                                    style={{
+                                        fontSize:12,
+                                        color:"#9ca3af",
+                                        marginBottom:20
+                                    }}
+
+                                >
+
+                                    Válida até {new Date(licencaTruckCriada.expira_em).toLocaleDateString('pt-BR')}.
+
+                                </div>
+
+
+                                <div
+
+                                    style={{
+                                        display:"flex",
+                                        justifyContent:"flex-end"
+                                    }}
+
+                                >
+
+                                    <button
+
+                                        onClick={fecharModalTruck}
+
+                                        style={{
+                                            border:"none",
+                                            background:"#2563eb",
+                                            color:"#ffffff",
+                                            padding:"10px 18px",
+                                            borderRadius:8,
+                                            fontWeight:600
+                                        }}
+
+                                    >
+
+                                        Fechar
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        )
+
+                        }
+
+
+                        {
+
+                        !licencaTruckCriada &&
+
+                        (
+
+                        <>
+
+
+                        {
+
+                        erroTruck &&
+
+                        (
+
+                            <div
+
+                                style={{
+                                    background:"#fef2f2",
+                                    color:"#dc2626",
+                                    padding:"10px 14px",
+                                    borderRadius:8,
+                                    marginBottom:16,
+                                    fontSize:14
+                                }}
+
+                            >
+
+                                {erroTruck}
+
+                            </div>
+
+                        )
+
+                        }
+
+
+                        <div style={{display:"flex", flexDirection:"column", gap:12}}>
+
+                            <label>
+
+                                Empresa *
+
+                                <select
+
+                                    value={formTruck.empresa_id}
+
+                                    onChange={(e)=>
+                                        setFormTruck({
+                                            ...formTruck,
+                                            empresa_id: e.target.value
+                                        })
+                                    }
+
+                                >
+
+                                    <option value="">Selecione a empresa</option>
+
+                                    {
+
+                                    empresas.map((empresa)=>(
+
+                                        <option
+
+                                            key={empresa.id}
+                                            value={empresa.id}
+
+                                        >
+
+                                            {empresa.nome_fantasia}
+
+                                        </option>
+
+                                    ))
+
+                                    }
+
+                                </select>
+
+                            </label>
+
+
+                            <label>
+
+                                Validade (dias) — padrão 30, pode digitar outro valor
+
+                                <input
+
+                                    type="number"
+
+                                    min={1}
+
+                                    value={formTruck.dias_validade ?? ""}
+
+                                    onChange={(e)=>
+                                        setFormTruck({
+                                            ...formTruck,
+                                            dias_validade:
+                                                e.target.value
+                                                    ? Number(e.target.value)
+                                                    : undefined
+                                        })
+                                    }
+
+                                />
+
+                            </label>
+
+                        </div>
+
+
+                        <div
+
+                            style={{
+                                display:"flex",
+                                justifyContent:"flex-end",
+                                gap:10,
+                                marginTop:22
+                            }}
+
+                        >
+
+                            <button
+
+                                onClick={fecharModalTruck}
+
+                                disabled={salvandoTruck}
+
+                                style={{
+                                    border:"1px solid #e5e7eb",
+                                    background:"#ffffff",
+                                    padding:"10px 18px",
+                                    borderRadius:8,
+                                    fontWeight:600
+                                }}
+
+                            >
+
+                                Cancelar
+
+                            </button>
+
+
+                            <button
+
+                                onClick={salvarLicencaTruck}
+
+                                disabled={salvandoTruck}
+
+                                style={{
+                                    border:"none",
+                                    background:"#ea580c",
+                                    color:"#ffffff",
+                                    padding:"10px 18px",
+                                    borderRadius:8,
+                                    fontWeight:600
+                                }}
+
+                            >
+
+                                {salvandoTruck ? "Emitindo..." : "Emitir licença TRUCK"}
 
                             </button>
 
