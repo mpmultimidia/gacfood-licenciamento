@@ -4,9 +4,9 @@ import { validarLicencaEmpresa } from "../../servicos/validacaoLicenca.js";
 const router = Router();
 
 router.post("/", async (req, res) => {
-  const { codigo } = req.body;
+  const { codigo, hashDispositivo } = req.body;
 
-  const resultado = await validarLicencaEmpresa(codigo);
+  const resultado = await validarLicencaEmpresa(codigo, hashDispositivo);
 
   res.json(resultado);
 });
