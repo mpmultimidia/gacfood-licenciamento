@@ -16,6 +16,7 @@ import {
   listarHistorico,
   listarLicencas,
   criarLicenca,
+  criarLicencaTruck,
   atualizarLicenca,
   excluirLicenca,
 } from "../controles/licencasControle.js";
@@ -36,6 +37,18 @@ licencasRotas.post(
   "/",
   autenticarAdmin,
   envolverAsync(criarLicenca)
+);
+
+
+// chamado pelo painel administrativo — emissão automática de licença
+// GACFOOD TRUCK (código de 6 dígitos, plano fixo, sem passar pelo Supabase
+// manualmente). Fica antes de "/:id" de propósito — como "/truck" não é um
+// formato de id, não colidiria mesmo, mas deixar entre as rotas de listar/
+// criar licença comum deixa mais fácil de achar no arquivo.
+licencasRotas.post(
+  "/truck",
+  autenticarAdmin,
+  envolverAsync(criarLicencaTruck)
 );
 
 
