@@ -6,6 +6,15 @@
 // valer pros dois tipos de aparelho igualmente, não só pra um deles.
 import { supabase } from "../supabase/conexao.js";
 
+// Erro de regra de negócio (limite contratado atingido) — diferente de uma
+// falha de banco/rede, que precisa ser tratada como indisponibilidade.
+export class ErroLimiteDispositivos extends Error {
+  constructor(mensagem: string) {
+    super(mensagem);
+    this.name = "ErroLimiteDispositivos";
+  }
+}
+
 /**
  * Confere se este dispositivo (hashDispositivo) já é conhecido para esta
  * licença. Se já é, só atualiza "visto por último" — reabrir o mesmo
@@ -44,7 +53,7 @@ export async function verificarERegistrarDispositivo(
   if (erroContagem) throw erroContagem;
 
   if ((count ?? 0) >= limiteDispositivos) {
-    throw new Error(
+    throw new ErroLimiteDispositivos(
       `Limite de ${limiteDispositivos} dispositivo(s) já atingido para esta empresa. ` +
       `Para liberar este aparelho, é necessário aumentar o limite contratado ou remover um dispositivo antigo.`
     );
