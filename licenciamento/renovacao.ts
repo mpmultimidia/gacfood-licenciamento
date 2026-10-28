@@ -52,13 +52,12 @@ export async function solicitarCodigoDeAtivacao(codigoEmpresa: string) {
 /**
  * Passo 2: o GACFOOD local chama isso com o código de 6 dígitos digitado
  * pelo cliente. Resolve a empresa, confirma que ela tem uma licença ativa,
- * marca o código como usado, checa/registra o dispositivo (quando o app
- * envia a identificação), e devolve TUDO que o GACFOOD precisa gravar no
- * .env desta instalação.
+ * marca o código como usado, checa/registra o dispositivo, e devolve TUDO
+ * que o GACFOOD precisa gravar no .env desta instalação.
  *
- * hashDispositivo é OPCIONAL: versões instaladas que ainda não enviam a
- * identificação do dispositivo continuam conseguindo ativar. Quando o app
- * envia o hash, o limite de dispositivos é aplicado normalmente.
+ * hashDispositivo agora é OBRIGATÓRIO — sem ele não há como aplicar o
+ * limite de dispositivos contratado. O main.js precisa enviar isso (ver
+ * arquivo corrigido em conjunto com esta mudança).
  */
 export async function ativarOuRenovarLicenca(
   codigoAtivacao: string,
@@ -66,6 +65,12 @@ export async function ativarOuRenovarLicenca(
 ) {
   if (!codigoAtivacao) {
     throw new Error("Código de ativação não informado.");
+  }
+
+  if (!opcoes.hashDispositivo) {
+    throw new Error(
+      "Identificação do dispositivo não informada. Atualize o GACFOOD para a versão mais recente."
+    );
   }
 
   const { data: registro, error: erroBusca } = await supabase
@@ -115,14 +120,11 @@ export async function ativarOuRenovarLicenca(
   // — se recusar aqui, o código de 6 dígitos continua válido para o
   // cliente tentar de novo depois de resolver a situação (ex: liberar
   // um dispositivo antigo), em vez de queimar o código à toa.
-  // Só roda quando o app enviou a identificação do dispositivo.
-  if (opcoes.hashDispositivo) {
-    await verificarERegistrarDispositivo(
-      (licenca as any).id,
-      (empresa as any).limite_dispositivos ?? 1,
-      opcoes.hashDispositivo
-    );
-  }
+  await verificarERegistrarDispositivo(
+    (licenca as any).id,
+    (empresa as any).limite_dispositivos ?? 1,
+    opcoes.hashDispositivo
+  );
 
   // Marca o código de 6 dígitos como usado — não pode ser reaproveitado.
   await supabase
@@ -130,16 +132,12 @@ export async function ativarOuRenovarLicenca(
     .update({ utilizado: true, utilizado_em: new Date().toISOString() })
     .eq("id", (registro as any).id);
 
-  const atualizacaoLicenca: Record<string, any> = {
-    ultima_validacao: new Date().toISOString(),
-  };
-  if (opcoes.hashDispositivo) {
-    atualizacaoLicenca.hash_dispositivo = opcoes.hashDispositivo;
-  }
-
   await supabase
     .from("licencas")
-    .update(atualizacaoLicenca)
+    .update({
+      ultima_validacao: new Date().toISOString(),
+      hash_dispositivo: opcoes.hashDispositivo,
+    })
     .eq("id", (licenca as any).id);
 
   const credenciais = await garantirCredenciaisRestaurante({
