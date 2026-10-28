@@ -52,12 +52,16 @@ export async function buscarLicencaAtivaDaEmpresa(
     );
   }
 
+  // Se houver mais de uma licença ATIVA (ex.: renovação emitida sem
+  // cancelar a anterior), usa a mais recente em vez de falhar.
   const { data, error } = await supabase
     .from("licencas")
     .select("*")
     .eq("empresa_id", empresaId)
     .eq("status", "ATIVA")
-    .single();
+    .order("emitida_em", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   if (error || !data) {
     throw new ErroValidacao(
@@ -75,18 +79,24 @@ export function licencaEstaValida(
     return false;
   }
 
-  if (
-    licenca.status &&
-    licenca.status !== "ATIVA"
-  ) {
+  // Só licença com status ATIVA vale (cancelada, suspensa ou qualquer
+  // outro status bloqueia).
+  if (licenca.status !== "ATIVA") {
     return false;
   }
 
-  if (licenca.vencimento) {
-    return (
-      new Date(licenca.vencimento).getTime() >
-      Date.now()
-    );
+  // A coluna de vencimento no banco é "expira_em" ("vencimento" fica como
+  // alternativa por compatibilidade).
+  const vencimento = licenca.expira_em ?? licenca.vencimento;
+
+  if (vencimento) {
+    const quando = new Date(vencimento).getTime();
+
+    if (Number.isNaN(quando)) {
+      return false;
+    }
+
+    return quando > Date.now();
   }
 
   return true;
