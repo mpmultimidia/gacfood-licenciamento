@@ -5,10 +5,11 @@
 // contratado por uma empresa (lic.empresas.limite_dispositivos) precisa
 // valer pros dois tipos de aparelho igualmente, não só pra um deles.
 import { supabase } from "../supabase/conexao.js";
+import { ErroValidacao } from "./validacao.js";
 
 // Erro de regra de negócio (limite contratado atingido) — diferente de uma
 // falha de banco/rede, que precisa ser tratada como indisponibilidade.
-export class ErroLimiteDispositivos extends Error {
+export class ErroLimiteDispositivos extends ErroValidacao {
   constructor(mensagem: string) {
     super(mensagem);
     this.name = "ErroLimiteDispositivos";
