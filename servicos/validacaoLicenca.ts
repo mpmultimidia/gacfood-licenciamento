@@ -1,67 +1,107 @@
 import { supabase } from "../supabase/conexao.js";
 import { listarFuncionalidadesDoPlano } from "./funcionalidadesPlano.js";
-import { verificarERegistrarDispositivo } from "../licenciamento/dispositivos.js";
+import { verificarERegistrarDispositivo, ErroLimiteDispositivos } from "../licenciamento/dispositivos.js";
 
-// CORREÇÃO: esta função consultava as colunas "codigo" e "ativa", que não
-// existem na tabela lic.licencas" (as colunas reais são "codigo_licenca"
-// e "status"). Isso fazia TODA validação de licença falhar silenciosamente
-// (a consulta retornava erro/vazio, e o GACFOOD instalado interpretava
-// isso como "licença inativa" a cada checagem periódica).
-//
-// CORREÇÃO (limite de dispositivos): esta rota é usada tanto pelo GACFOOD
-// ERP (checagem periódica, sem hashDispositivo — já foi registrado antes
-// via /api/licencas/ativar) quanto pelo GACFOOD TRUCK (celular, que não
-// tem uma etapa de "ativação com credenciais" separada — pra ele, esta
-// PRÓPRIA chamada de validação é o momento de registrar o dispositivo).
-// Por isso: se vier um hashDispositivo, o limite da empresa é checado e o
-// dispositivo é registrado/atualizado aqui também, usando a mesma lógica
-// compartilhada com o lado do ERP. Se não vier hash (chamada antiga do
-// ERP), o comportamento continua exatamente como já era.
+// Exige a identificação do dispositivo em TODA validação (ERP e TRUCK).
+// Sem ela não há como controlar o número de aparelhos contratado.
+// Só para dar tempo dos clientes atualizarem o app, é possível criar na
+// Vercel a variável EXIGIR_DISPOSITIVO com o valor "false" (temporário).
+// Depois da transição, apague essa variável.
+const EXIGIR_DISPOSITIVO = process.env.EXIGIR_DISPOSITIVO !== "false";
+
+/**
+ * Valida a licença de uma empresa. A licença só é aceita se:
+ *  - existir com status ATIVA e não estiver vencida (expira_em);
+ *  - a empresa estiver com status ATIVA;
+ *  - o dispositivo for informado e couber no limite contratado.
+ * Em qualquer outro caso devolve { data: null, error }.
+ * Falhas de banco/rede NÃO são devolvidas como "licença inativa": são
+ * lançadas, para a rota responder erro 500 e o app manter o último resultado.
+ */
 export async function validarLicencaEmpresa(codigo: string, hashDispositivo?: string) {
   const resultado = await supabase
     .from("licencas")
     .select("*")
     .eq("codigo_licenca", codigo)
     .eq("status", "ATIVA")
+    .order("emitida_em", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (resultado.error) {
+    throw resultado.error;
+  }
+
+  if (!resultado.data) {
+    return {
+      data: null,
+      error: { message: "Licença não encontrada, cancelada ou vencida." },
+    };
+  }
+
+  const licenca = resultado.data as any;
+
+  // Vencimento
+  if (licenca.expira_em) {
+    const expira = new Date(licenca.expira_em).getTime();
+
+    if (Number.isNaN(expira) || expira < Date.now()) {
+      return { data: null, error: { message: "Licença vencida." } };
+    }
+  }
+
+  // Empresa
+  const { data: empresa, error: erroEmpresa } = await supabase
+    .from("empresas")
+    .select("limite_dispositivos, status")
+    .eq("id", licenca.empresa_id)
     .single();
 
-  if (resultado.error || !resultado.data) {
-    return resultado;
+  if (erroEmpresa) {
+    throw erroEmpresa;
+  }
+
+  if (!empresa) {
+    return { data: null, error: { message: "Empresa não encontrada." } };
+  }
+
+  const statusEmpresa = (empresa as any).status;
+
+  if (statusEmpresa && String(statusEmpresa).toUpperCase() !== "ATIVA") {
+    return { data: null, error: { message: "Empresa inativa ou suspensa." } };
+  }
+
+  // Dispositivo
+  if (!hashDispositivo && EXIGIR_DISPOSITIVO) {
+    return {
+      data: null,
+      error: {
+        message: "Identificação do dispositivo não informada. Atualize o GACFOOD para a versão mais recente.",
+      },
+    };
   }
 
   if (hashDispositivo) {
-    const { data: empresa, error: erroEmpresa } = await supabase
-      .from("empresas")
-      .select("limite_dispositivos")
-      .eq("id", (resultado.data as any).empresa_id)
-      .single();
-
-    if (erroEmpresa || !empresa) {
-      return { data: null, error: erroEmpresa || new Error("Empresa não encontrada.") };
-    }
-
     try {
       await verificarERegistrarDispositivo(
-        (resultado.data as any).id,
+        licenca.id,
         (empresa as any).limite_dispositivos ?? 1,
         hashDispositivo
       );
     } catch (erroLimite: any) {
-      // Mesmo formato de erro que uma falha de consulta ao Supabase, pra
-      // quem chama esta função não precisar tratar dois formatos
-      // diferentes de erro.
-      return { data: null, error: { message: erroLimite.message } };
+      if (erroLimite instanceof ErroLimiteDispositivos) {
+        return { data: null, error: { message: erroLimite.message } };
+      }
+      throw erroLimite;
     }
   }
 
-  // Resolve quais módulos o plano desta licença libera, e devolve junto —
-  // é isso que o GACFOOD instalado usa para mostrar/esconder telas e
-  // liberar/bloquear rotas conforme o plano contratado.
-  const modulos = await listarFuncionalidadesDoPlano((resultado.data as any).plano_id);
+  // Módulos liberados pelo plano desta licença.
+  const modulos = await listarFuncionalidadesDoPlano(licenca.plano_id);
 
   return {
     data: {
-      ...resultado.data,
+      ...licenca,
       modulos,
     },
     error: null,
