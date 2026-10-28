@@ -4,6 +4,7 @@ import { garantirCredenciaisRestaurante } from "../supabase/authRestaurante.js";
 import { listarFuncionalidadesDoPlano } from "../servicos/funcionalidadesPlano.js";
 import { ambiente } from "../config/ambiente.js";
 import { verificarERegistrarDispositivo } from "./dispositivos.js";
+import { ErroValidacao } from "./validacao.js";
 
 function gerarCodigoAtivacaoTexto(): string {
   let codigo = "";
@@ -27,7 +28,7 @@ export async function solicitarCodigoDeAtivacao(codigoEmpresa: string) {
     .single();
 
   if (erroEmpresa || !empresa) {
-    throw new Error("Empresa não encontrada.");
+    throw new ErroValidacao("Empresa não encontrada.");
   }
 
   const codigo = gerarCodigoAtivacaoTexto();
@@ -64,11 +65,11 @@ export async function ativarOuRenovarLicenca(
   opcoes: { hashDispositivo?: string } = {}
 ) {
   if (!codigoAtivacao) {
-    throw new Error("Código de ativação não informado.");
+    throw new ErroValidacao("Código de ativação não informado.");
   }
 
   if (!opcoes.hashDispositivo) {
-    throw new Error(
+    throw new ErroValidacao(
       "Identificação do dispositivo não informada. Atualize o GACFOOD para a versão mais recente."
     );
   }
@@ -82,15 +83,15 @@ export async function ativarOuRenovarLicenca(
     .maybeSingle();
 
   if (erroBusca || !registro) {
-    throw new Error("Código de ativação inválido.");
+    throw new ErroValidacao("Código de ativação inválido.");
   }
 
   if ((registro as any).utilizado) {
-    throw new Error("Este código de ativação já foi utilizado.");
+    throw new ErroValidacao("Este código de ativação já foi utilizado.");
   }
 
   if (new Date((registro as any).expira_em).getTime() < Date.now()) {
-    throw new Error("Este código de ativação expirou. Peça um código novo.");
+    throw new ErroValidacao("Este código de ativação expirou. Peça um código novo.");
   }
 
   const { data: empresa, error: erroEmpresa } = await supabase
@@ -100,7 +101,7 @@ export async function ativarOuRenovarLicenca(
     .single();
 
   if (erroEmpresa || !empresa) {
-    throw new Error("Empresa vinculada a este código não foi encontrada.");
+    throw new ErroValidacao("Empresa vinculada a este código não foi encontrada.");
   }
 
   const { data: licenca, error: erroLicenca } = await supabase
@@ -113,7 +114,7 @@ export async function ativarOuRenovarLicenca(
     .maybeSingle();
 
   if (erroLicenca || !licenca) {
-    throw new Error("Esta empresa não possui uma licença ativa no momento.");
+    throw new ErroValidacao("Esta empresa não possui uma licença ativa no momento.");
   }
 
   // Checa o limite de dispositivos ANTES de consumir o código de ativação
